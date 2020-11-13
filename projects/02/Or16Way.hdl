@@ -1,0 +1,35 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Or16Way.hdl
+
+/**
+ * 16-way Or: 
+ * out = (in[0] or in[1] or ... or in[15])
+ */
+
+CHIP Or16Way {
+    IN in[16];
+    OUT out;
+
+    PARTS:
+    // Put your code here:
+    Or(a=in[0], b=in[1], out=OR1);
+    Or(a=in[2], b=in[3], out=OR2);
+    Or(a=in[4], b=in[5], out=OR3);
+    Or(a=in[6], b=in[7], out=OR4);
+    Or(a=in[8], b=in[9], out=OR5);
+    Or(a=in[10], b=in[11], out=OR6);
+    Or(a=in[12], b=in[13], out=OR7);
+    Or(a=in[14], b=in[15], out=OR8);
+
+    Or(a=OR1, b=OR2, out=OR11);
+    Or(a=OR3, b=OR4, out=OR12);
+    Or(a=OR5, b=OR6, out=OR13);
+    Or(a=OR7, b=OR8, out=OR14);
+
+    Or(a=OR11, b=OR12, out=OR21);
+    Or(a=OR13, b=OR14, out=OR22);
+
+    Or(a=OR21, b=OR22, out=out);
+}

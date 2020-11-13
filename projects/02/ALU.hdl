@@ -42,5 +42,28 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+    // Put you code here:
+    Mux16(a=x, b[0..15]=false, sel=zx, out=fx);
+    Not16(in=fx, out=nfx);
+    Mux16(a=fx, b=nfx, sel=nx, out=ffx);
+ 
+    Mux16(a=y, b[0..15]=false, sel=zy, out=fy);
+    Not16(in=fy, out=nfy);
+    Mux16(a=fy, b=nfy, sel=ny, out=ffy);
+ 
+    Add16(a=ffx, b=ffy, out=fxADDy);
+    And16(a=ffx, b=ffy, out=fxANDy);
+ 
+    Mux16(a=fxANDy, b=fxADDy, sel=f, out=ff);
+    Not16(in=ff, out=nff);
+    Mux16(a=ff, b=nff, sel=no, out=fout);
+    And16(a=fout, b=fout,  out=out);
+
+    Or16Way(in=fout, out=nzr);
+    Not(in=nzr, out=zr);
+
+    // 最高位是否为1
+    And16(a[0..14]=false, a[15]=true, b=fout, out=ng16);
+
+    Or16Way(in=ng16, out=ng);
 }
