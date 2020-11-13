@@ -17,4 +17,31 @@ CHIP PC {
 
     PARTS:
     // Put your code here:
+
+    // 选择将数据置零
+    Mux16(a=sd, b[0..15]=false, sel=reset, out=rout);
+    And16(a=sd, b=rout, out=resetsd);
+
+    // 是否load
+    Not(in=reset, out=canload);
+    And(a=canload, b=load, out=mload);
+
+    // load
+    Mux16(a=resetsd, b=in,  sel=mload, out=loadsd);
+
+    // 是否inc
+    Or(a=reset, b=load, out=notinc);
+    Not(in=notinc, out=caninc);
+    And(a=caninc, b=inc, out=minc);
+
+    // inc
+    Add16(a=loadsd, b[0]=minc, b[1..15]=false, out=incsd);
+    
+    // else保持原值
+
+    // 保存数据
+    Register(in=incsd, load=true, out=sd);
+
+    // 输出数据
+    Or16(a=sd, b=sd, out=out);
 }
