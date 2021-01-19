@@ -12,38 +12,38 @@ output-list time%S0.4.0 inM%D0.6.0 instruction%B0.16.0 reset%B2.1.2 outM%D1.6.0 
 set instruction %B0011000000111001, // @12345
 tick, output, tock, output;
 
-set instruction %B1110110000010000, // D=A
+set instruction %B1110110000010000, // D=A D=12345
 tick, output, tock, output;
 
 set instruction %B0101101110100000, // @23456
 tick, output, tock, output;
 
-set instruction %B1110000111010000, // D=A-D
+set instruction %B1110000111010000, // D=A-D D=23456-12345=11111
 tick, output, tock, output;
 
 set instruction %B0000001111101000, // @1000
 tick, output, tock, output;
 
-set instruction %B1110001100001000, // M=D
+set instruction %B1110001100001000, // M=D RAM[1000]=11111
 tick, output, tock, output;
 
 set instruction %B0000001111101001, // @1001
 tick, output, tock, output;
 
-set instruction %B1110001110011000, // MD=D-1
+set instruction %B1110001110011000, // MD=D-1 RAM[1001]=D=11111-1=11110
 tick, output, tock, output;
 
 set instruction %B0000001111101000, // @1000
 tick, output, tock, output;
 
-set instruction %B1111010011010000, // D=D-M
+set instruction %B1111010011010000, // D=D-M D=11110-RAM[1000]=11110-11111=-1
 set inM 11111,
 tick, output, tock, output;
 
 set instruction %B0000000000001110, // @14
 tick, output, tock, output;
 
-set instruction %B1110001100000100, // D;jlt
+set instruction %B1110001100000100, // D;jlt if D<0; JUMP
 tick, output, tock, output;
 
 set instruction %B0000001111100111, // @999

@@ -40,4 +40,47 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    // 指令解码:i xx a cccccc ddd jjj
+    // i: 0 代表 A-指令；1 代表 C-指令
+    DMux(in=true, sel=instruction[15], a=isAInstruction, b=isCInstruction);
+    // xx：无
+    // a cccccc：comp部分（图4.3），对应ALU计算方式（图2.6）
+    // ALU x=D a=0,y=A;a=1,y=M
+    Mux16(a=registerA, b=inM, sel=instruction[12], out=inALU);
+    ALU(x=registerD, y=inALU, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=aluout, zr=equal, ng=lower);
+
+    // ddd：目标存储域，图4.4 A D M
+    And(a=isCInstruction, b=instruction[5], out=cInsLoadA);
+    And(a=isCInstruction, b=instruction[4], out=cInsLoadD);
+    And(a=isCInstruction, b=instruction[3], out=cInsLoadM);
+
+    // jjj：跳转域，图4.5
+    Or(a=equal, b=lower, out=le);
+    Not(in=le, out=great);
+    And(a=great, b=instruction[0], out=greatJump);
+    And(a=equal, b=instruction[1], out=equalJump);
+    And(a=lower, b=instruction[2], out=lowerJump);
+    Or(a=greatJump, b=equalJump, out=jump1);
+    Or(a=jump1, b=lowerJump, out=jump2);
+    And(a=jump2, b=isCInstruction, out=jump);
+    Not(in=jump, out=notjump);
+    
+
+    // Register A：A-指令会存储；ddd会存储
+    Mux16(a[0..15]=false, b[0..14]=instruction[0..14], b[15]=false, sel=isAInstruction, out=aInsValue);
+    Mux16(a[0..15]=false, b=aluout, sel=cInsLoadA, out=aAluValue);
+    Or16(a=aInsValue, b=aAluValue, out=aLoadValue);
+    Or(a=isAInstruction, b=cInsLoadA, out=isLoadA);
+    ARegister(in=aLoadValue, load=isLoadA, out=registerA); 
+
+    // Register D：ddd会存储
+    DRegister(in=aluout, load=cInsLoadD, out=registerD);
+
+    // PC
+    PC(in=registerA, load=jump, inc=notjump, reset=reset, out[0..14]=pc);
+
+    // out
+    And16(a=aluout, b[0..15]=true, out=outM);
+    And(a=true, b=cInsLoadM, out=writeM);
+    And16(a=registerA, b[0..14]=true, b[15]=false, out[0..14]=addressM);
 }

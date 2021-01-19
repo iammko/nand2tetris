@@ -28,4 +28,37 @@ CHIP Memory {
 
     PARTS:
     // Put your code here:
+    // check address valid
+    And(a=address[13], b=address[14], out=invalidHead);
+    And16(a[0..12]=true, a[13..14]=false, b[0..14]=address, b[15]=false, out=invalidBodySet);
+    Or16Way(in=invalidBodySet, out=invalidBody);
+    And(a=invalidHead, b=invalidBody, out=invalid);
+    Not(in=invalid, out=valid);
+
+    // only valid address can load
+    And(a=load, b=valid, out=validLoad);
+
+    // select address range
+    DMux(in=true, sel=address[14], a=selectRAM, b=selectKeyboardScreen);
+    DMux(in=selectKeyboardScreen, sel=address[13], a=selectScreen, b=selectKeyboard);
+
+    // RAM 16K [0x0000, 0x3FFF] = [000 0000 0000 0000] -> [011 1111 1111 1111]
+    // address[0..13] address[14]=0
+    And(a=validLoad, b=selectRAM, out=loadRAM);
+    RAM16K(in=in, load=loadRAM, address=address[0..13], out=readRAM);
+    Mux16(a=false, b=readRAM, sel=selectRAM, out=outRAM);
+
+    // Screen 8K [0x4000, 0x5FFF] = [100 0000 0000 0000] -> [101 1111 1111 1111]
+    // address[0..12] address[13] = 1 address[14]=1
+    And(a=validLoad, b=selectScreen, out=loadScreen);
+    Screen(in=in, load=loadScreen, address=address[0..12], out=readScreen);
+    Mux16(a=false, b=readScreen, sel=selectScreen, out=outScreen);
+
+    // Keybord 1 0x6000 (110 0000 0000 0000)
+    // address[13] = 1 address[14]=1
+    Keyboard(out=readKeyboard);
+    Mux16(a=false, b=readKeyboard, sel=selectKeyboard, out=outKeyboard);
+
+    Or16(a=outKeyboard, b=outScreen, out=outKS);
+    Or16(a=outKS, b=outRAM, out=out);
 }
