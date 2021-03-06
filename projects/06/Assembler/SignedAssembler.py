@@ -32,11 +32,22 @@ import Code
 
 
 class SignedAssembler:
-    def SetFile(self, file):
+    def __init__(self):
+        self.file_list = []
+
+    def AddFile(self, file):
+        self.file_list.append(file)
+
+    def Work(self):
+        while(len(self.file_list) > 0):
+            self.__SetFile(self.file_list.pop())
+            self.__CompileFile()
+
+    def __SetFile(self, file):
         self.file = file
         self.out_file = os.path.dirname(file) + os.path.sep + os.path.basename(file).split('.')[0] + r'.hack'
 
-    def Work(self):
+    def __CompileFile(self):
         parser = Parser.Parser(self.file)
         code = Code.Code()
 
