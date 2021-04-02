@@ -42,7 +42,7 @@ class Parser:
             # 去掉前后空格
             self.nextcmdline = self.nextcmdline.strip()
             # 注释
-            if self.nextcmdline.find('//') == 0:
+            if self.nextcmdline.find('//') != -1:
                 self.nextcmdline = self.nextcmdline.split('//', 1)[0]
             # 空行
             if self.nextcmdline == '':
@@ -98,6 +98,4 @@ class Parser:
             return self.__arg2
         
         return None
-
-        
         
