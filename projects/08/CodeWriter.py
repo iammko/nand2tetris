@@ -74,8 +74,8 @@ class CodeWriter:
 
         # 当前声明函数名
         self.__curFunctionName = ''
-        # 标签递增
-        self.__labelidx = 0
+        # call函数标签递增
+        self.__callfuncidx = 0
 
         # 当前输出的文件
         self.__curoutfile = ''
@@ -86,7 +86,8 @@ class CodeWriter:
             self.__curoutfile = outfilename
             self.__curoutfilename = os.path.basename(self.__curoutfile)
             self.fd = open(outfilename, 'w')
-        self.__curfilecount = 1
+            self.__curfilecount = 0
+        self.__curfilecount += 1
         self.__curfilename = os.path.basename(parsefilename)
         self.__curfilenamenosuffix = self.__curfilename.split('.')[0]
         self.fd.write("// %d %s\n"%(self.__curfilecount, self.__curfilename))
@@ -133,7 +134,7 @@ class CodeWriter:
 
     # call f n, 调用之前需要用push命令,压入n个参数,作为函数f的传入参数
     def writeCall(self, functionName, numArgs):
-        return_address = self.__makeLabelStr('ret_' + functionName + '_arg_' + numArgs + '_idx_' + str(self.__labelidx))
+        return_address = self.__makeLabelStr('ret_' + functionName + '_arg_' + numArgs + '_idx_' + str(self.__callfuncidx))
         # 保存返回地址
         self.__constantOrLabel2D(return_address)
         self.__pushStack()
@@ -154,7 +155,7 @@ class CodeWriter:
         self.__writeStrList(
             [
                 '@SP',
-                'D=A',
+                'D=M',
                 '@'+numArgs,
                 'D=D-A',
                 '@5',
@@ -166,7 +167,7 @@ class CodeWriter:
         self.__writeStrList(
             [
                 '@SP',
-                'D=A'
+                'D=M'
             ]
         )
         self.__registerD2Address('LCL')
@@ -179,7 +180,8 @@ class CodeWriter:
         )
         # 返回地址标签
         self.__writeStrList('(' + return_address + ')')
-        pass
+
+        self.__callfuncidx += 1
 
     def writeReturn(self):
         # 把LCL指向的地址放入R14,R14保存FRAME的值
@@ -254,6 +256,47 @@ class CodeWriter:
             # push constant 0
             self.writePushPop(VMCommandType.C_PUSH, 'constant', '0')
             loopNum -= 1
+    
+    # 引导代码
+    def writeGuideCode(self):
+        # SP 256
+        self.__writeStrList([
+            '@256',
+            'D=A',
+            '@SP',
+            'M=D'
+        ])
+        # LCL 300
+        self.__writeStrList([
+            '@300',
+            'D=A',
+            '@LCL',
+            'M=D'
+        ])
+        # ARG 400
+        self.__writeStrList([
+            '@400',
+            'D=A',
+            '@ARG',
+            'M=D'
+        ])
+        # 起始调用Sys.init
+        # 直接跳转
+        # 这个方式得到的结果,和本书提供的工具Virtual Machine Emulator 加载*VME.tst输出的结果一致
+        # | RAM[0] |RAM[261]|
+        # | 257    |      0 |
+        # 
+        # self.__writeStrList([
+        #     '@Sys.init',
+        #     '0;JMP'
+        # ])
+
+        # 调用Call方法
+        # | RAM[0] |RAM[261]|
+        # | 262    |      3 |
+        # 测试比较文件.cmp结果中,偏移了5位,正好是Call保存的调用者的数据,这里就直接调用call方法
+        self.writeCall('Sys.init', '0')
+
 
     def __writeStrList(self, strList):
         if type(strList) is str:
@@ -354,11 +397,11 @@ class CodeWriter:
 
     # 逻辑命令
     def __writeLogicArithmetic(self, symbol):
-        # 取出第一个元素，放入D寄存器，SP--
+        # 取出第一个元素y，放入D寄存器，SP--
         self.__popStack()
-        # 取第二个元素的地址，放入A寄存器
+        # 取第二个元素x的地址，放入A寄存器
         self.__popStackAddress()
-        # 相减，做跳转
+        # 相减x-y，做跳转
         logic_true = str.format("%s_TRUE_%d"%(self.__curfilenamenosuffix, self.__logicidx))
         logic_end = str.format("%s_END_%d"%(self.__curfilenamenosuffix, self.__logicidx))
         self.__writeStrList(
@@ -366,11 +409,11 @@ class CodeWriter:
                 'D=M-D',
                 '@'+logic_true,
                 'D;'+symbol,
-                'D=' + str(VMBoolType.FALSE),
+                'D=' + VMBoolType.FALSE.value,
                 '@'+logic_end,
                 '0;JMP',
                 '('+logic_true+')',
-                'D='+ str(VMBoolType.TRUE),
+                'D='+ VMBoolType.TRUE.value,
                 '('+logic_end+')'
             ]
         )
@@ -494,3 +537,5 @@ class CodeWriter:
     def Close(self):
         if self.fd != None:
             self.fd.close()
+            self.fd = None
+            self.__curFunctionName = ''

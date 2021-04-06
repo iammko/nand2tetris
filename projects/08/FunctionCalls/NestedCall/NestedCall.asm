@@ -1,6 +1,6 @@
 // 1 Sys.vm
 (Sys.init)
-@4000	
+@4000
 D=A
 @SP
 M=M+1
@@ -29,7 +29,7 @@ D=M
 @R13
 A=M
 M=D
-@Sys.init$ret_Sys.main_arg_0_idx_0
+@Sys.init$ret_Sys.main_arg_0_idx_4
 D=A
 @SP
 M=M+1
@@ -60,7 +60,7 @@ M=M+1
 A=M-1
 M=D
 @SP
-D=A
+D=M
 @0
 D=D-A
 @5
@@ -68,12 +68,12 @@ D=D-A
 @ARG
 M=D
 @SP
-D=A
+D=M
 @LCL
 M=D
 @Sys.main
 0;JMP
-(Sys.init$ret_Sys.main_arg_0_idx_0)
+(Sys.init$ret_Sys.main_arg_0_idx_4)
 @1
 D=A
 @R5
@@ -209,7 +209,7 @@ D=A
 M=M+1
 A=M-1
 M=D
-@Sys.main$ret_Sys.add12_arg_1_idx_0
+@Sys.main$ret_Sys.add12_arg_1_idx_5
 D=A
 @SP
 M=M+1
@@ -240,7 +240,7 @@ M=M+1
 A=M-1
 M=D
 @SP
-D=A
+D=M
 @1
 D=D-A
 @5
@@ -248,12 +248,12 @@ D=D-A
 @ARG
 M=D
 @SP
-D=A
+D=M
 @LCL
 M=D
 @Sys.add12
 0;JMP
-(Sys.main$ret_Sys.add12_arg_1_idx_0)
+(Sys.main$ret_Sys.add12_arg_1_idx_5)
 @SP
 AM=M-1
 D=M

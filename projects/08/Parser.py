@@ -39,11 +39,11 @@ class Parser:
             # 结尾
             if self.nextcmdline == '':
                 return False
-            # 去掉前后空格
-            self.nextcmdline = self.nextcmdline.strip()
             # 注释
             if self.nextcmdline.find('//') != -1:
                 self.nextcmdline = self.nextcmdline.split('//', 1)[0]
+            # 去掉前后空格
+            self.nextcmdline = self.nextcmdline.strip()
             # 空行
             if self.nextcmdline == '':
                 continue

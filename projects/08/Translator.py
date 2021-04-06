@@ -56,34 +56,37 @@ def __parseFile(codeWriter, out_file, parse_file):
         if parser.commandType() == VMCommandType.C_CALL:
             codeWriter.writeCall(parser.arg1(), parser.arg2())
 
-def __parseDir(codeWriter, parse_dir):
+def __parseDir(codeWriter, parse_dir, all_files):
     out_file = parse_dir + os.path.sep + os.path.basename(parse_dir) + '.asm'
 
-    l = os.listdir(parse_dir)
-    for f in l:
+    parse_files = []
+    for f in all_files:
+        if f.split('.')[-1] == 'vm':
+            parse_files.append(f)
+
+    if len(parse_files) > 1:
+        # 加入引导代码
+        codeWriter.setFileName(out_file, out_file)
+        codeWriter.writeGuideCode()
+
+    for f in parse_files:
         cur = os.path.join(parse_dir, f)
-        if os.path.isfile(cur):
-            if cur.split('.')[-1] != 'vm':
-                continue
-            __parseFile(codeWriter, out_file, cur)
-        if os.path.isdir(cur):
-            __parseDir(codeWriter, cur)
+        __parseFile(codeWriter, out_file, cur)
 
 def translate(file_arg):
     codeWriter = CodeWriter()
-    #path_dict = {'file':[]} 
 
     # 文件
     if os.path.isfile(file_arg):
         ___out_file = file_arg.rsplit('.', 1)[0] + '.asm'
         __parseFile(codeWriter, ___out_file, file_arg)  
+        codeWriter.Close()
 
     # 目录
     if os.path.isdir(file_arg):
-        #__getDirFileR(file_arg, path_dict)  
-        __parseDir(codeWriter, file_arg)
-
-    codeWriter.Close()
+        for root, dirs, files in os.walk(file_arg):
+            __parseDir(codeWriter, root, files)
+            codeWriter.Close()
     
     
 file_arg = os.sys.argv[1] 
