@@ -281,7 +281,7 @@ class CodeWriter:
             'M=D'
         ])
         # 起始调用Sys.init
-        # 直接跳转
+        # 1、直接跳转
         # 这个方式得到的结果,和本书提供的工具Virtual Machine Emulator 加载*VME.tst输出的结果一致
         # | RAM[0] |RAM[261]|
         # | 257    |      0 |
@@ -290,8 +290,7 @@ class CodeWriter:
         #     '@Sys.init',
         #     '0;JMP'
         # ])
-
-        # 调用Call方法
+        # 2、调用Call方法
         # | RAM[0] |RAM[261]|
         # | 262    |      3 |
         # 测试比较文件.cmp结果中,偏移了5位,正好是Call保存的调用者的数据,这里就直接调用call方法
