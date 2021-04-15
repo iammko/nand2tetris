@@ -1,0 +1,106 @@
+// Hangman小人类
+
+class Man
+{
+    field int stroke, x, y, w, h, l, r, hand, leg;
+
+    constructor Man new()
+    {
+        let stroke = 0;
+        let x = 256;
+        let y = 192;
+        let w = 64;
+        let h = 128;
+        let l = h/6;
+        let r = w/12;
+        let hand = w/6;
+        let leg = w/4;
+
+        do Screen.setColor(true);
+        return this;
+    }
+
+    /* 画一笔 */
+    method void draw()
+    {
+        if(stroke > 6)
+        {
+            return;
+        }
+
+        let stroke = stroke + 1;
+        if ( stroke = 1)
+        {
+            // 画绞刑架
+            // 起始坐标x, 底架宽度w, 绞刑架高度h, 吊绳长度l = h/5, 人头半径r = w/4
+
+            // 底架坐标(x, y) (x + w, y)
+            do Screen.drawLine(x, y, x + w, y);
+
+            // 支撑杆坐标(x + w/2, y) (x + w/2, y - h)
+            do Screen.drawLine(x + (w/2), y, x + (w/2), y - h);
+
+            // 顶部横杆坐标(x + w/2, y - h) (x + w, y - h) 
+            do Screen.drawLine(x + (w/2), y - h, x + w, y - h);
+
+            // 吊绳坐标(x + w, y - h) (x + w, y - h + l)
+            do Screen.drawLine(x + w, y - h, x + w, y - h + l );
+        }
+
+        if( stroke = 2)
+        {
+            // 小人头坐标
+            // 圆心(x + w, y - h + l + r) r
+            do Screen.drawCircle(x + w, y - h + l + r, r);
+        }
+
+        if( stroke = 3)
+        {
+            // 小人身体坐标(x + w, y - h + l + (r*2)) (x + w, y - h + l + (r*2) + (h/3))
+            do Screen.drawLine(x + w, y - h + l + (r*2), x + w, y - h + l + (r*2) + (h/3));
+        }
+
+        if( stroke = 4)
+        {
+            // 左手坐标(x + w, y - h + l + (r*2) + (h/9), x + w - ((hand * 100) / 86), y - h + l + (r*2) + (h/9) - (hand/2)) 角度30°
+            do Screen.drawLine(x + w, y - h + l + (r*2) + (h/9), x + w - ((hand * 100) / 86), y - h + l + (r*2) + (h/9) - (hand/2));
+        }
+
+        if( stroke = 5)
+        {
+            // 右手坐标(x + w, y - h + l + (r*2) + (h/9), x + w + ((hand * 100) / 86), y - h + l + (r*2) + (h/9) - (hand/2)) 角度30°
+            do Screen.drawLine(x + w, y - h + l + (r*2) + (h/9), x + w + ((hand * 100) / 86), y - h + l + (r*2) + (h/9) - (hand/2));
+        }
+
+        if(stroke = 6)
+        {
+            // 左腿 45°
+            do Screen.drawLine(x + w, y - h + l + (r*2) + (h/3), x + w - ((leg * 100) / 85), y - h + l + (r*2) + (h/3) + ((leg * 100) / 85));
+        }
+
+        if(stroke = 7)
+        {
+            // 右腿 45°
+            do Screen.drawLine(x + w, y - h + l + (r*2) + (h/3), x + w + ((leg * 100) / 85), y - h + l + (r*2) + (h/3) + ((leg * 100) / 85));
+        }
+
+        return;
+    }
+
+    /* 是否画完了 */
+    method bool isFinish()
+    {
+        if(~(stroke < 7))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    method void reset()
+    {
+        let stroke = 0;
+        return;
+    }
+}

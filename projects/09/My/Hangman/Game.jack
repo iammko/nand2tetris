@@ -1,0 +1,158 @@
+class Game
+{
+    field int round, x, y, wordLen;
+    field Word word;
+    field Man man;
+
+    constructor Game new()
+    {
+        let round = 0;
+
+        return this;
+    }
+
+    method void init()
+    {
+        let round = 0;
+        let x = 0;
+        let y = 0;
+        let wordLen = 0;
+
+        let word = Word.new();
+        let man = Man.new();
+        return;
+    }
+
+    method void reset()
+    {
+        let round = 0;
+        let x = 0;
+        let y = 0;
+        let wordLen = 0;
+
+        do word.reset();
+        do man.reset();
+        do Screen.clearScreen();
+        do Output.moveCursor(0, 0);
+        return;
+    }
+
+    method void run()
+    {
+        var int flag; // 1(first) 2(reset) 4(exit) 8(lose) 16(win)
+        var char key;
+        var boolean validKey, guessHit;
+        let guessHit = false;
+
+        let flag = 1;
+
+        do init();
+
+        while(~((flag & 4) > 0))
+        {
+            // first | reset 
+            if( (flag & 3) > 0 )
+            {
+                // reset
+                if( (flag & 2) > 0)
+                {
+                    do reset();
+                }
+
+                let wordLen = Keyboard.readInt("input word len:");
+                do word.gen(wordLen);
+                let wordLen = word.GetWordLen();
+
+                do Output.printString("Start Guess!(ESC to exit)");
+                do Output.println();
+        
+                let x = 5;
+                let y = wordLen + 3;
+        
+                // 设置到初始位置
+                do Output.moveCursor(x, 0);
+
+                let validKey = false;
+
+                // 去掉 first 和 reset 标志位
+                let flag = flag & 4;
+            }
+
+            if( (flag & 8) > 0)
+            {
+                // lose
+                do Output.printString("You Lose!");
+                do Output.println();
+                do Output.printString("(ESC to exit, F2 to again)");
+            }
+
+            if( (flag & 16) > 0)
+            {
+                // win
+                do Output.printString("You Win!");
+                do Output.println();
+                do Output.printString("(ESC to exit, F2 to again)");
+            }
+
+            while( key = 0)
+            {
+                let key = Keyboard.readChar();
+            }
+
+            if(key = 140){ let flag = flag | 4; } // ESC key, exit
+            if(key = 142){ let flag = flag | 2; } // F1 key, reset
+            if(~(flag & 24 > 0))
+            {
+                if(key > 64)
+                {
+                    if(key < 91)
+                    {
+                        let validKey = true;
+                        let guessHit = word.guess(key);
+                        if(~(guessHit))
+                        {
+                            do man.draw();
+                            if((man.isFinish()) = true)
+                            {
+                                let flag = flag | 8;
+                            }
+                        }
+                        if(guessHit)
+                        {
+                            if(word.isFinish() = true)
+                            {
+                                let flag = flag | 16;
+                            }
+                        }
+                    }
+            }
+            }
+
+            // 设置到当前行首
+            do Output.moveCursor(x, 0);
+
+            // 有效键打印当前猜单词进度和当前所猜单词
+            if(validKey)
+            {
+                do Output.printString(word.GetGuess());
+                do Output.moveCursor(x, y);
+                do Output.printChar(key);
+
+                // 移动到下一行
+                let x = x + 1;
+                do Output.moveCursor(x, 0);
+
+                let validKey = false;
+            }
+
+            let round = round + 1;
+            let key = 0;
+        }
+
+        do Screen.clearScreen();
+        do Output.moveCursor(0, 0);
+        do Output.printString("game exit");
+
+        return;
+    }
+}

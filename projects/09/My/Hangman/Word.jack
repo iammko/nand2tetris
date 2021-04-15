@@ -1,0 +1,91 @@
+class Word
+{
+    field String word;
+    field String guess;
+    field int mask, guessLen;
+
+    constructor Word new()
+    {
+        let mask = 42;
+        return this;
+    }
+
+    method boolean guess(char key)
+    {
+        var int i, len;
+        var boolean hit;
+        let hit = false;
+
+        let i = 0;
+        let len = word.length();
+        while(i < len)
+        {
+            if(word.charAt(i) = key)
+            {
+                if(~(guess.charAt(i) = key))
+                {
+                    do guess.setCharAt(i, key);
+                    let guessLen = guessLen + 1;
+                    let hit = true;
+                }
+            }
+            let i = i + 1;
+        }
+
+        return hit;
+    }
+
+    method void gen(int len)
+    {
+        var int i;
+        var char wordChar;
+
+        let len = 6;
+
+        let guess = String.new(len);
+        let word = "master";
+
+        let i = 0;
+        while(i < len)
+        {
+            // word小写转大写
+            let wordChar = word.charAt(i);
+            if(wordChar > 96)
+            {
+                if(wordChar < 123)
+                {
+                    let wordChar = wordChar - 32;
+                }
+            }
+            do word.setCharAt(i, wordChar);
+
+            do guess.appendChar(mask);
+            let i = i + 1;
+        }
+
+        return;
+    }
+
+    method boolean isFinish()
+    {
+        if(guessLen < word.length())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    method void reset()
+    {
+        let guessLen = 0;
+        do word.dispose();
+        do guess.dispose();
+
+        return;
+    }
+
+    method int GetWordLen(){ return word.length(); }
+    method String GetWord(){ return word; }
+    method String GetGuess(){ return guess; }
+}
