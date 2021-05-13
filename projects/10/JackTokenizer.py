@@ -10,10 +10,10 @@ class JackTokenizer:
         # 是否在注释块当中
         self.inCommentBlock = False
         
-        self.keyword = ['class', 'constructor', 'function', 'method', 'field', 'static', 
+        self.keywordList = ['class', 'constructor', 'function', 'method', 'field', 'static', 
             'var', 'int', 'char', 'boolean', 'void', 'true', 'false', 'null', 'this', 
             'let', 'do', 'if', 'else', 'while', 'return']
-        self.symbol = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~']
+        self.symbolList = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~']
     
     def parseNewLine(self):
         readFlag = True
@@ -125,7 +125,7 @@ class JackTokenizer:
                     bReturnToken = True
             
             # 字元符号
-            if not bInDoubleQuote and c in self.symbol:
+            if not bInDoubleQuote and c in self.symbolList:
                 # 没有已解析的token, 当前符号作为解析的token
                 if self.next_token == '':
                     bReturnToken = True
@@ -170,10 +170,10 @@ class JackTokenizer:
         self.next_token = ''
 
     def tokenType(self):
-        if self.cur_token in self.keyword:
+        if self.cur_token in self.keywordList:
             return Token.KEYWORD
 
-        if self.cur_token in self.symbol:
+        if self.cur_token in self.symbolList:
             return Token.SYMBOL
 
         if self.cur_token.isidentifier():
@@ -189,16 +189,50 @@ class JackTokenizer:
         exit(-1)
 
     def keyword(self):
-        return self.cur_token.upper()
+        return '<keyword> ' + self.cur_token + ' </keyword>'+ '\n'
 
     def symbol(self):
-        return self.cur_token
+        out_token = self.cur_token       
+        if self.cur_token == '<':
+            out_token = '&lt'
+        if self.cur_token == '>':
+            out_token = '&gt'
+        if self.cur_token == '&':
+            out_token = '&amp'
+
+        return '<symbol> ' + self.cur_token + ' </symbol>' + '\n'
  
     def identifier(self):
-        return self.cur_token
+        return '<identifier> ' + self.cur_token + ' </identifier>'+ '\n'
 
     def intVal(self):
-        return self.cur_token
+        return '<integerConstant> ' + self.cur_token  + ' </integerConstant>'+ '\n'
 
     def stringVal(self):
-        return self.cur_token
+        return '<StringConstant> ' + self.cur_token.replace('"','') + ' </StringConstant>'+ '\n'
+
+    def token2xml(self):
+        tokenType = self.tokenType()
+        if tokenType == Token.KEYWORD:
+            return self.keyword()
+        if tokenType == Token.SYMBOL:
+            return self.symbol()
+        if tokenType == Token.IDENTIFIER:
+            return self.identifier()
+        if tokenType == Token.INT_CONST:
+            return self.intVal()
+        if tokenType == Token.STRING_CONST:
+            return self.stringVal()
+
+        print("err: tokenType %s is err type"%tokenType)
+        exit(-1)
+    
+    def outputxml(self, outFile):
+        outFile.write('<tokens>\n')
+        while True:
+            if not self.hasMoreTokens():
+                break
+            self.advance()
+            outFile.write('\t'+self.token2xml())
+        outFile.write('</tokens>\n')
+            

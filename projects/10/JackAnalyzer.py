@@ -2,6 +2,7 @@ import os
 import sys
 
 from JackTokenizer import JackTokenizer
+from CompilationEngine import CompilationEngine
 
 if len(sys.argv) < 2:
     sys.exit(" use python %s : file | path "%sys.argv[0])
@@ -12,12 +13,12 @@ def __analyzeFile(file):
 
     tokenizer = JackTokenizer(file)
 
-    i = 10
-    while True:
-        if not tokenizer.hasMoreTokens():
-            break
-        tokenizer.advance()
-        print(tokenizer.cur_token, tokenizer.tokenType())
+    outFile = os.path.dirname(file) + os.path.sep + os.path.basename(file).split('.')[0] + '.xml'
+    outFileFd = open(outFile, 'w+')
+
+    compilationEngine = CompilationEngine(tokenizer, file)
+
+    tokenizer.outputxml(outFileFd)
 
 def __analyzeDir(dir):
     pass
