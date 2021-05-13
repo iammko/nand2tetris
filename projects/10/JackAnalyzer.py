@@ -12,8 +12,12 @@ def __analyzeFile(file):
 
     tokenizer = JackTokenizer(file)
 
-    tokenizer.hasMoreTokens()
-    pass
+    i = 10
+    while True:
+        if not tokenizer.hasMoreTokens():
+            break
+        tokenizer.advance()
+        print(tokenizer.cur_token, tokenizer.tokenType())
 
 def __analyzeDir(dir):
     pass

@@ -1,8 +1,11 @@
+import os
+from Comm import Token, Keyword
+
 class JackTokenizer:
     def __init__(self, file):
         self.fd = open(file, 'r')
-        self.cur_token = None
-        self.next_token = None
+        self.cur_token = ''
+        self.next_token = ''
         self.cur_line = ''
         # 是否在注释块当中
         self.inCommentBlock = False
@@ -12,12 +15,7 @@ class JackTokenizer:
             'let', 'do', 'if', 'else', 'while', 'return']
         self.symbol = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~']
     
-
-    def parseToken(self):
-
-        pass
-
-    def hasMoreTokens(self):
+    def parseNewLine(self):
         readFlag = True
         line = ''
         while True:
@@ -43,7 +41,7 @@ class JackTokenizer:
                     continue
                 
                 # 删除注释部分
-                print(line)
+                #print(line)
                 newLine = ""
                 if startCommentPos > 0:
                     newLine = line[: startCommentPos] + ' '
@@ -85,7 +83,122 @@ class JackTokenizer:
             if line == '':
                 continue
 
-            print(line)
-            break
+            self.cur_line = line
+            return True
 
-        return True
+    # 解析当前行的token, 解析出token返回true, 解析完了返回false
+    def parseToken(self):
+        if self.cur_line == '':
+            return False
+        
+        # 解析一行的token
+        bInDoubleQuote = False
+        while self.cur_line != '':
+            c = self.cur_line[0]
+
+            # 是否将当前字符从当前行移除
+            bRmvChar = True
+            # 是否将当前字符加入token
+            bAddToToken = True
+            # 是否返回字元
+            bReturnToken = False
+
+            # 字符串
+            if c == '"':
+                if bInDoubleQuote == False:
+                    bInDoubleQuote = True
+                    # 有已解析的token
+                    if self.next_token != '':
+                        bRmvChar = False
+                        bAddToToken = False
+                        bReturnToken = True
+                else:
+                    # 第二个双引号
+                    bReturnToken = True
+
+            # 空格
+            if not bInDoubleQuote and c.isspace():
+                # 没有已解析的token, 继续解析
+                bAddToToken = False
+                if self.next_token != '':
+                # 有已解析的token
+                    bReturnToken = True
+            
+            # 字元符号
+            if not bInDoubleQuote and c in self.symbol:
+                # 没有已解析的token, 当前符号作为解析的token
+                if self.next_token == '':
+                    bReturnToken = True
+                else:
+                # 有已解析的
+                    bAddToToken = False
+                    bRmvChar = False
+                    bReturnToken = True
+
+            if bRmvChar:
+                if len(self.cur_line) == 1:
+                    self.cur_line = ''
+                else:
+                    self.cur_line = self.cur_line[1:]
+
+            if bAddToToken:
+                self.next_token = self.next_token + c
+
+            if bReturnToken:
+                if self.next_token != '':
+                    return True
+    
+        return False
+
+
+    def hasMoreTokens(self):
+        # 检查是否还有内容
+        if self.cur_line == '':
+            if self.parseNewLine() == False:
+                return False
+
+        # 解析行
+        if self.parseToken():
+            #print(self.next_token)
+            return True
+
+        # 递归新行
+        return self.hasMoreTokens()
+
+    def advance(self):
+        self.cur_token = self.next_token
+        self.next_token = ''
+
+    def tokenType(self):
+        if self.cur_token in self.keyword:
+            return Token.KEYWORD
+
+        if self.cur_token in self.symbol:
+            return Token.SYMBOL
+
+        if self.cur_token.isidentifier():
+            return Token.IDENTIFIER
+
+        if self.cur_token.isnumeric():
+            return Token.INT_CONST
+
+        if self.cur_token[0] == '"' and self.cur_token[-1] == '"' and len(self.cur_token) > 2:
+            return Token.STRING_CONST
+
+        print('err: illegal token > %s <'%self.cur_token)
+        exit(-1)
+
+    def keyword(self):
+        return self.cur_token.upper()
+
+    def symbol(self):
+        return self.cur_token
+ 
+    def identifier(self):
+        return self.cur_token
+
+    def intVal(self):
+        return self.cur_token
+
+    def stringVal(self):
+        return self.cur_token
