@@ -13,12 +13,15 @@ def __analyzeFile(file):
 
     tokenizer = JackTokenizer(file)
 
+    # 字元转换器输出
+    # outFile = os.path.dirname(file) + os.path.sep + os.path.basename(file).split('.')[0] + 'T.xml'
+    # outFileFd = open(outFile, 'w+')
+    # tokenizer.outputxml(outFileFd)
+
+    # 语法分析器
     outFile = os.path.dirname(file) + os.path.sep + os.path.basename(file).split('.')[0] + '.xml'
-    outFileFd = open(outFile, 'w+')
-
-    compilationEngine = CompilationEngine(tokenizer, file)
-
-    tokenizer.outputxml(outFileFd)
+    compilationEngine = CompilationEngine(tokenizer, outFile)
+    compilationEngine.compileClass()
 
 def __analyzeDir(dir):
     pass

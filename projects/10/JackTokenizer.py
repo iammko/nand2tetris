@@ -182,47 +182,46 @@ class JackTokenizer:
         if self.cur_token.isnumeric():
             return Token.INT_CONST
 
-        if self.cur_token[0] == '"' and self.cur_token[-1] == '"' and len(self.cur_token) > 2:
+        if len(self.cur_token) > 2 and self.cur_token[0] == '"' and self.cur_token[-1] == '"' :
             return Token.STRING_CONST
 
         print('err: illegal token > %s <'%self.cur_token)
         exit(-1)
 
     def keyword(self):
-        return '<keyword> ' + self.cur_token + ' </keyword>'+ '\n'
+        return self.cur_token
 
     def symbol(self):
-        out_token = self.cur_token       
-        if self.cur_token == '<':
-            out_token = '&lt;'
-        if self.cur_token == '>':
-            out_token = '&gt;'
-        if self.cur_token == '&':
-            out_token = '&amp;'
-
-        return '<symbol> ' + out_token + ' </symbol>' + '\n'
+        return self.cur_token
  
     def identifier(self):
-        return '<identifier> ' + self.cur_token + ' </identifier>'+ '\n'
+        return self.cur_token
 
     def intVal(self):
-        return '<integerConstant> ' + self.cur_token  + ' </integerConstant>'+ '\n'
+        return (int)(self.cur_token)
 
     def stringVal(self):
-        return '<stringConstant> ' + self.cur_token.replace('"','') + ' </stringConstant>'+ '\n'
+        return self.cur_token.replace('"','')
 
     def token2xml(self):
         tokenType = self.tokenType()
         if tokenType == Token.KEYWORD:
-            return self.keyword()
+            return '<keyword> ' + self.keyword()  + ' </keyword>'+ '\n'
         if tokenType == Token.SYMBOL:
-            return self.symbol()
+            out_token = self.symbol()       
+            if self.cur_token == '<':
+                out_token = '&lt;'
+            if self.cur_token == '>':
+                out_token = '&gt;'
+            if self.cur_token == '&':
+                out_token = '&amp;'
+            return '<symbol> ' + out_token + ' </symbol>' + '\n'
         if tokenType == Token.IDENTIFIER:
-            return self.identifier()
+            return '<identifier> ' + self.identifier() + ' </identifier>'+ '\n'
         if tokenType == Token.INT_CONST:
-            return self.intVal()
+            return '<integerConstant> ' + (str)(self.intVal()) + ' </integerConstant>'+ '\n'
         if tokenType == Token.STRING_CONST:
-            return self.stringVal()
+            return '<stringConstant> ' + self.stringVal() + ' </stringConstant>'+ '\n'
 
         print("err: tokenType %s is err type"%tokenType)
         exit(-1)
