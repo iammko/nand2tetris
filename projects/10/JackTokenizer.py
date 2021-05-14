@@ -194,13 +194,13 @@ class JackTokenizer:
     def symbol(self):
         out_token = self.cur_token       
         if self.cur_token == '<':
-            out_token = '&lt'
+            out_token = '&lt;'
         if self.cur_token == '>':
-            out_token = '&gt'
+            out_token = '&gt;'
         if self.cur_token == '&':
-            out_token = '&amp'
+            out_token = '&amp;'
 
-        return '<symbol> ' + self.cur_token + ' </symbol>' + '\n'
+        return '<symbol> ' + out_token + ' </symbol>' + '\n'
  
     def identifier(self):
         return '<identifier> ' + self.cur_token + ' </identifier>'+ '\n'
@@ -209,7 +209,7 @@ class JackTokenizer:
         return '<integerConstant> ' + self.cur_token  + ' </integerConstant>'+ '\n'
 
     def stringVal(self):
-        return '<StringConstant> ' + self.cur_token.replace('"','') + ' </StringConstant>'+ '\n'
+        return '<stringConstant> ' + self.cur_token.replace('"','') + ' </stringConstant>'+ '\n'
 
     def token2xml(self):
         tokenType = self.tokenType()
