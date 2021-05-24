@@ -56,6 +56,10 @@ class CompilationEngine:
         #todo 检查声明的变量名是否合法
         return True
 
+    def checkVarName(self):
+        #todo 检查变量名是否已经声明
+        return True
+
     def checkSubroutineCall(self):
         #todo 检查子程序名是否合法
         # 
@@ -243,7 +247,6 @@ class CompilationEngine:
                     debug_log("err: invalid keyword %s "%self.tokenizer.keyword())
                     exit(-1)
 
-                
                 # }
                 if tokenType == Token.SYMBOL and self.tokenizer.symbol() == '}':
                     self.writexml(self.tokenizer.token2xml())
@@ -252,13 +255,11 @@ class CompilationEngine:
                 print(self.tokenizer.cur_token)
                 debug_log("err: miss \'}\' ")
                 exit(-1)
-
-
+                
             debug_log("err: compiler invalid bit ")
             exit(-1)
 
         self.afterCompileXXX('subroutineBody')
-        pass
 
     def compileParameterList(self):
         # type or ')'
@@ -397,6 +398,7 @@ class CompilationEngine:
 
                 self.tokenizer.advance()
                 tokenType = self.tokenizer.tokenType()
+                bFirst = False
 
             if self.tokenizer.keyword() == 'let':
                 self.compileLet()
@@ -419,8 +421,6 @@ class CompilationEngine:
         # 'do'
         self.writexml(self.tokenizer.token2xml())
 
-
-        
         doBits = 0b1
         while True:
             if not self.tokenizer.hasMoreTokens():
@@ -469,22 +469,102 @@ class CompilationEngine:
                         self.writexml(self.tokenizer.token2xml())
                         break
                 
-
-
-
-        self.writexml(sys._getframe().f_code.co_name + '\n')
         self.afterCompileXXX('doStatement')
         pass
 
     def compileLet(self):
         self.beforeCompileXXX('letStatement')
-        self.writexml(sys._getframe().f_code.co_name + '\n')
+
+        # let
+        self.writexml(self.tokenizer.token2xml())
+
+        letBits = 0b1
+        while True:
+            if not self.tokenizer.hasMoreTokens():
+                debug_log("compileVarDec err")
+                exit(-1)
+
+            self.tokenizer.advance()
+            tokenType = self.tokenizer.tokenType()
+
+            # varName
+            if (letBits & 0b1) > 0:
+                if tokenType == Token.IDENTIFIER:
+                    if not self.checkVarName():
+                        debug_log("compileVarDec err: undeclare variable \'%s\'"%self.tokenizer.cur_token)
+                        exit(-1)
+                    self.writexml(self.tokenizer.token2xml())
+                    letBits <<= 1
+                    continue
+                debug_log("compileVarDec err: invalid token \'%s\'"%self.tokenizer.cur_token)
+                exit(-1)
+
+            # '[' expression ']'
+            if (letBits & 0b10) > 0:
+                if tokenType == Token.SYMBOL:
+                    if self.tokenizer.symbol() == '[':
+                        self.writexml(self.tokenizer.token2xml())
+                        self.compileExpression()
+
+                        if self.tokenizer.tokenType() == Token.SYMBOL and self.tokenizer.symbol() == ']':
+                            self.writexml(self.tokenizer.token2xml())
+                        else:
+                            debug_log("compileVarDec err: miss ']' ")
+                            exit(-1)    
+                letBits <<= 1
+            
+            # '='            
+            if self.tokenizer.symbol() == '=':
+                self.writexml(self.tokenizer.token2xml())
+                self.compileExpression()
+
+                if self.tokenizer.tokenType() == Token.SYMBOL and self.tokenizer.symbol() == ';':
+                    self.writexml(self.tokenizer.token2xml())
+                    break
+
+            debug_log("compileVarDec err: miss ';' ")
+            exit(-1)
+
         self.afterCompileXXX('letStatement')
         pass
 
     def compileWhile(self):
         self.beforeCompileXXX('whileStatement')
-        self.writexml(sys._getframe().f_code.co_name + '\n')
+
+        # while
+        self.writexml(self.tokenizer.token2xml())
+
+        whileBits = 0b1
+        while True:
+            if not self.tokenizer.hasMoreTokens():
+                debug_log("compileWhile err")
+                exit(-1)
+
+            self.tokenizer.advance()
+            tokenType = self.tokenizer.tokenType()
+
+            # '(' expression ')'
+            if (whileBits & 0b1) > 0:
+                if self.tokenizer.tokenType() == Token.SYMBOL and self.tokenizer.symbol() == '(':
+                    self.writexml(self.tokenizer.token2xml())
+                    self.compileExpression()
+
+                    if self.tokenizer.tokenType() == Token.SYMBOL and self.tokenizer.symbol() == ')':
+                        self.writexml(self.tokenizer.token2xml())
+                        whileBits <<= 1
+                        continue
+
+                    debug_log("compileWhile err: miss ')'")
+                    exit(-1)   
+                debug_log("compileWhile err: miss '('")
+                exit(-1)       
+            
+            # '{' 
+
+
+
+
+
         self.afterCompileXXX('whileStatement')
         pass
 
