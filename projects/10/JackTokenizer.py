@@ -152,6 +152,9 @@ class JackTokenizer:
 
 
     def hasMoreTokens(self):
+        if self.next_token != '':
+            return True
+
         # 检查是否还有内容
         if self.cur_line == '':
             if self.parseNewLine() == False:
@@ -203,7 +206,7 @@ class JackTokenizer:
     def stringVal(self):
         return self.cur_token.replace('"','')
 
-    def token2xml(self):
+    def tokenStr(self):
         tokenType = self.tokenType()
         if tokenType == Token.KEYWORD:
             return '<keyword> ' + self.keyword()  + ' </keyword>'+ '\n'
