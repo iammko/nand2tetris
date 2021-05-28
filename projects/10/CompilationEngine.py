@@ -67,7 +67,7 @@ class CompilationEngine:
             exit(-1)
         self.tokenizer.advance()
         if self.tokenizer.tokenType() != Token.SYMBOL or self.tokenizer.symbol() != symbol:
-            debug_log("err: miss symbol \'%s\'"%symbol, 2)
+            debug_log("err: miss symbol \'%s\' before \'%s\'"%(symbol, self.tokenizer.symbol()), 2)
             exit(-1)
         self.writexml(self.tokenizer.tokenStr())
 
@@ -482,11 +482,26 @@ class CompilationEngine:
         pass
 
     def compileExpression(self):
-        self.writexml(sys._getframe().f_code.co_name + '\n')
+        self.beforeCompileXXX('expression')
+
+        while True:
+            self.compileTerm()
+            
+            if not self.tokenizer.hasMoreTokens() :
+                break
+
+            if self.tokenizer.next_token in ['+', '-', '*', '/', '&', '|', '<', '>', '=']:
+                self.writexml(self.tokenizer.tokenStr())
+                continue
+            break
+        
+        self.afterCompileXXX('expression')
         pass
 
     def compileTerm(self):
-        self.writexml(sys._getframe().f_code.co_name + '\n')
+        self.beforeCompileXXX('term')
+        
+        self.afterCompileXXX('term')
         pass
 
     def compileExpressionList(self):
