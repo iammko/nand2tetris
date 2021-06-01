@@ -24,7 +24,16 @@ def __analyzeFile(file):
     compilationEngine.compileClass()
 
 def __analyzeDir(dir):
-    pass
+    files = os.listdir(dir)
+    for f in files:
+        if f.split('.')[-1] != 'jack':
+            continue
+        __analyzeFile(os.path.join(dir, f))
+    # for root, dirs, files in os.walk(dir):
+    #     for f in files:
+    #         if f.split('.')[-1] != 'jack':
+    #             continue
+    
 
 
 def __analyze(source_param):

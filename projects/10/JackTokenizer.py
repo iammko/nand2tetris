@@ -191,6 +191,25 @@ class JackTokenizer:
         print('err: illegal token > %s <'%self.cur_token)
         exit(-1)
 
+    def nextTokenType(self):
+        if self.next_token in self.keywordList:
+            return Token.KEYWORD
+
+        if self.next_token in self.symbolList:
+            return Token.SYMBOL
+
+        if self.next_token.isidentifier():
+            return Token.IDENTIFIER
+
+        if self.next_token.isnumeric():
+            return Token.INT_CONST
+
+        if len(self.next_token) > 2 and self.next_token[0] == '"' and self.next_token[-1] == '"' :
+            return Token.STRING_CONST
+
+        print('err: illegal token > %s <'%self.next_token)
+        exit(-1)
+
     def keyword(self):
         return self.cur_token
 
