@@ -7,6 +7,7 @@ class JackTokenizer:
         self.cur_token = ''
         self.next_token = ''
         self.cur_line = ''
+        self.lineNum = 0
         # 是否在注释块当中
         self.inCommentBlock = False
         
@@ -85,6 +86,7 @@ class JackTokenizer:
 
             self.cur_line = line
             return True
+        self.lineNum += 1
 
     # 解析当前行的token, 解析出token返回true, 解析完了返回false
     def parseToken(self):

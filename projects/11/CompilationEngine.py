@@ -1,7 +1,7 @@
 from os import system
 import sys
 from JackTokenizer import JackTokenizer
-from Comm import Token, Keyword, SymbolTableKind, VMSegment, VMCommand
+from Comm import Token, Keyword, VMSegment, VMCommand, SymbolTableKind
 from SymbolTable import symbolTable, SymbolTable
 from VMWriter import VMWriter
 
@@ -27,6 +27,8 @@ class CompilationEngine:
         self.funcStack = []
         self.symbolTable = None
         self.varNum = 0
+        self.whileInc = 0
+        self.ifInc = 0
 
     def __del__(self):
         self.vmWriter.close()
@@ -70,8 +72,6 @@ class CompilationEngine:
         self.writexml(self.tokenizer.tokenStr())
 
     def compileClass(self):
-        self.beforeCompileXXX('class')
-
         if not self.tokenizer.hasMoreTokens():
             debug_log("err: empty file")
             exit
@@ -93,7 +93,6 @@ class CompilationEngine:
             debug_log('class need className as follow, %s is err'%self.tokenizer.cur_token)
             exit(-1)
         self.className = self.tokenizer.identifier()
-        self.writexml(self.tokenizer.tokenStr())
         if symbolTable.get(self.className) != None:
             debug_log('err: repeat class \'%s\''%self.className)
             exit(-1)
@@ -108,7 +107,6 @@ class CompilationEngine:
         if self.tokenizer.tokenType() != Token.SYMBOL:
             debug_log('class %s miss symbol \'{\''%self.className)
             exit(-1)
-        self.writexml(self.tokenizer.tokenStr())
         
         while True:
             if not self.tokenizer.hasMoreTokens():
@@ -124,20 +122,14 @@ class CompilationEngine:
 
             if self.tokenizer.next_token == '}':
                 self.tokenizer.advance()
-                self.writexml(self.tokenizer.tokenStr())
                 break
 
             debug_log("class %s, err token:%s"%(self.className, self.tokenizer.cur_token))
             exit(-1)
 
-        self.afterCompileXXX('class')
-
     def compileClassVarDec(self):
-        self.beforeCompileXXX('classVarDec')
-
         # keyword
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
         if self.tokenizer.keyword() == 'static':
             varKind = SymbolTableKind.STATIC
         else: # 'field'
@@ -151,7 +143,6 @@ class CompilationEngine:
         if not self.checkValidType():
             debug_log('unknow var type \'%s\''%self.tokenizer.keyword())
             exit(-1)
-        self.writexml(self.tokenizer.tokenStr())
         varType = self.tokenizer.cur_token
 
         while True:
@@ -163,7 +154,6 @@ class CompilationEngine:
             if self.tokenizer.tokenType() != Token.IDENTIFIER:
                 debug_log("compileClassVarDec err: miss 'identifier' before \'%s\'"%self.tokenizer.cur_token)
                 exit(-1)
-            self.writexml(self.tokenizer.tokenStr())
 
             varName = self.tokenizer.identifier()
             if self.symbolTable.KindOf(varName) != SymbolTableKind.NONE:
@@ -186,11 +176,7 @@ class CompilationEngine:
         # ;
         self.checkCompileSymbol(';')
 
-        self.afterCompileXXX('classVarDec')
-
     def compileSubroutine(self):
-        self.beforeCompileXXX('subroutineDec')
-        
         # keyword
         self.tokenizer.advance()
         self.writexml(self.tokenizer.tokenStr())
@@ -204,7 +190,6 @@ class CompilationEngine:
             if self.tokenizer.tokenType() != Token.KEYWORD or self.tokenizer.keyword() != 'void':
                 debug_log("err: invalid type \'%s\' "%(self.tokenizer.cur_token))
                 exit(-1)
-        self.writexml(self.tokenizer.tokenStr())
 
         # 子程序名
         if not self.tokenizer.hasMoreTokens() :
@@ -214,7 +199,6 @@ class CompilationEngine:
         if self.tokenizer.tokenType() != Token.IDENTIFIER:
             debug_log("err: invalid identifier \'%s\'"%self.tokenizer.cur_token)
             exit(-1)
-        self.writexml(self.tokenizer.tokenStr())
         self.funcStack.insert(0, self.tokenizer.identifier())
         functionName =  self.className + '.' + self.tokenizer.cur_token
 
@@ -228,7 +212,6 @@ class CompilationEngine:
         varNum = 0
         self.varNum = 0
         # subroutineBody
-        self.beforeCompileXXX('subroutineBody')
         # '{'
         self.checkCompileSymbol('{')
         # varDec 
@@ -257,14 +240,9 @@ class CompilationEngine:
 
         # '}'
         self.checkCompileSymbol('}')
-        self.afterCompileXXX('subroutineBody')
-        
         self.funcStack.pop()
 
-        self.afterCompileXXX('subroutineDec')
-
     def compileParameterList(self): 
-        self.beforeCompileXXX('parameterList')
         while True:
             # type
             if not self.tokenizer.hasMoreTokens() :
@@ -300,12 +278,7 @@ class CompilationEngine:
             self.tokenizer.advance()
             self.writexml(self.tokenizer.tokenStr())
 
-        self.afterCompileXXX('parameterList')
-        
-
     def compileVarDec(self):
-        self.beforeCompileXXX('varDec')
-
         # 'var' 
         self.tokenizer.advance()
         self.writexml(self.tokenizer.tokenStr())
@@ -347,11 +320,7 @@ class CompilationEngine:
         # ';'
         self.checkCompileSymbol(';')
 
-        self.afterCompileXXX('varDec')
-
     def compileStatements(self):
-        self.beforeCompileXXX('statements')
-
         while True:
             if not self.tokenizer.hasMoreTokens():
                 break
@@ -369,14 +338,9 @@ class CompilationEngine:
             else:
                 break
 
-        self.afterCompileXXX('statements')
-
     def compileDo(self):
-        self.beforeCompileXXX('doStatement')
-
         # 'do'
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
 
         # subroutimeName | (className|varName).subroutineName
         if not self.tokenizer.hasMoreTokens() :
@@ -386,16 +350,17 @@ class CompilationEngine:
         if self.tokenizer.tokenType() != Token.IDENTIFIER:
             debug_log("compileDo err: invalid identifier \'%s\'"%self.tokenizer.cur_token)
             exit(-1)            
-        self.writexml(self.tokenizer.tokenStr())
 
+        doFuncName = ''
+        subroutimeName = self.tokenizer.identifier()
         # 
         if not self.tokenizer.hasMoreTokens() :
             debug_log("err: miss \'(\'")
             exit(-1)
 
+        paramNum = 0
         if self.tokenizer.next_token == '.':
             self.tokenizer.advance()
-            self.writexml(self.tokenizer.tokenStr())
             if not self.tokenizer.hasMoreTokens() :
                 debug_log("err: miss subroutimeName after \'.\'")
                 exit(-1)
@@ -403,47 +368,61 @@ class CompilationEngine:
             if self.tokenizer.tokenType() != Token.IDENTIFIER:
                 debug_log("err: invalid subroutimeName \'%s\'"%self.tokenizer.cur_token)
                 exit(-1)
-            self.writexml(self.tokenizer.tokenStr())
+            doFuncName = subroutimeName + '.' + self.tokenizer.identifier()
+            
+            if self.symbolTable.getValByName(subroutimeName) != None:
+                # 需要对象的方法, this指针放在参数1
+                self.vmWriter.writePush(self.symbolTable.KindOf(subroutimeName), self.symbolTable.IndexOf(subroutimeName))
+                paramNum = 1
+        else:
+            doFuncName = self.className + '.' + subroutimeName
 
         # '('
         self.checkCompileSymbol('(')
-        # expressionlist
+        # expressionlist 
         self.expressionListEndToken = ')'
-        self.compileExpressionList()
+        paramNum += self.compileExpressionList()
         # ')'
         self.checkCompileSymbol(')')
         # ';'
         self.checkCompileSymbol(';')
-                
-        self.afterCompileXXX('doStatement')
+
+        self.vmWriter.writeCall(doFuncName, paramNum)
 
     def compileLet(self):
-        self.beforeCompileXXX('letStatement')
-
         # let
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
         
         # varName
         if not self.tokenizer.hasMoreTokens() :
             debug_log("err: miss varName")
             exit(-1)
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
 
+        # 2种情况
+        # 变量
+        # 数组
+        bIsArray = False
+        varName = self.tokenizer.identifier()
+        kind = self.symbolTable.KindOf(varName)
+        index = self.symbolTable.IndexOf(varName)
         # ('[' expression ']')?
         if not self.tokenizer.hasMoreTokens() :
             debug_log("err: miss varName")
             exit(-1)
         if self.tokenizer.next_token == '[':
+            # push数组首地址
+            self.vmWriter.writePush(kind, index)
             self.tokenizer.advance()
-            self.writexml(self.tokenizer.tokenStr())
-            
             # expression
             self.compileExpression()
-
             # ']'
             self.checkCompileSymbol(']')
+            # 数组首地址和偏移的和
+            self.vmWriter.writeArithmetic(VMCommand.ADD)
+            # 地址存入that指针(pointer[1])的
+            self.vmWriter.writePop(VMSegment.POINTER, 1)
+            bIsArray = True
             
         # '='      
         self.checkCompileSymbol('=')
@@ -451,21 +430,33 @@ class CompilationEngine:
         self.compileExpression()
         # ';'
         self.checkCompileSymbol(';')
-
-        self.afterCompileXXX('letStatement')
+        if bIsArray:
+            # *that = expression, 数组成员赋值
+            self.vmWriter.writePop(VMSegment.THAT, 0)
+        else:
+            # 变量赋值
+            self.vmWriter.writePop(kind, index)
+        
+        
 
     def compileWhile(self):
-        self.beforeCompileXXX('whileStatement')
-
         # while
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
+        whileLabel1 = '%s_%s_while_%d_%d'%(self.className, self.funcStack[0], self.tokenizer.lineNum, self.whileInc)
+        self.vmWriter.writeLabel(whileLabel1)
+        self.whileInc += 1
+        whileLabel2 = '%s_%s_while_%d_%d'%(self.className, self.funcStack[0], self.tokenizer.lineNum, self.whileInc)
+        self.whileInc += 1
 
         # '('
         self.checkCompileSymbol('(')
         # expresssion
         self.compileExpression()
         # ')'
+        # 取个反, 错误的直接跳转到结束, 好处理一些
+        self.vmWriter.writeArithmetic(VMCommand.NEG)
+        self.vmWriter.writeIf(whileLabel2)
+
         self.checkCompileSymbol(')')
         # '{'
         self.checkCompileSymbol('{')
@@ -474,38 +465,38 @@ class CompilationEngine:
         # '}'
         self.checkCompileSymbol('}')
 
-        self.afterCompileXXX('whileStatement')
+        self.vmWriter.writeGoto(whileLabel1)
+        self.vmWriter.writeLabel(whileLabel2)
 
     def compileReturn(self):
-        self.beforeCompileXXX('returnStatement')
-
         # return
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
-
         if not self.tokenizer.hasMoreTokens() :
             debug_log("err: miss \';\'")
             exit(-1)
         if self.tokenizer.next_token != ';':
             self.compileExpression()
-
         # ';'
         self.checkCompileSymbol(';')
-        
-        self.afterCompileXXX('returnStatement')
+
+        self.vmWriter.writeReturn()
 
     def compileIf(self):
-        self.beforeCompileXXX('ifStatement')
-        
         # if
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
-        
+        ifLabel1 = '%s_%s_if_%d_%d'%(self.className, self.funcStack[0], self.tokenizer.lineNum, self.ifInc)
+        self.ifInc += 1
+        ifLabel2 = '%s_%s_if_%d_%d'%(self.className, self.funcStack[0], self.tokenizer.lineNum, self.ifInc)
+        self.ifInc += 1
+
         # '('
         self.checkCompileSymbol('(')
         # expression
         self.compileExpression()
         # ')'
+        self.vmWriter.writeArithmetic(VMCommand.NEG)
+        self.vmWriter.writeIf(ifLabel1)
+
         self.checkCompileSymbol(')')
         # '{'
         self.checkCompileSymbol('{')
@@ -513,7 +504,9 @@ class CompilationEngine:
         self.compileStatements()
         # '}'
         self.checkCompileSymbol('}')
+        self.vmWriter.writeGoto(ifLabel2)
 
+        self.vmWriter.writeLabel(ifLabel1)
         # 'else' {}
         if self.tokenizer.hasMoreTokens() :
             if self.tokenizer.next_token == 'else':
@@ -525,12 +518,30 @@ class CompilationEngine:
                 self.compileStatements()
                 # '}'
                 self.checkCompileSymbol('}')
+        
+        self.vmWriter.writeLabel(ifLabel2)
 
-        self.afterCompileXXX('ifStatement')
+    def writeArithmetic(self, command):
+        if command == '+':
+            self.vmWriter.writeArithmetic(VMCommand.ADD)
+        if command == '-':
+            self.vmWriter.writeArithmetic(VMCommand.SUB)
+        if command == '*':
+            self.vmWriter.writeCall('Math.multiply', 2)
+        if command == '/':
+            self.vmWriter.writeCall('Math.divide', 2)
+        if command == '&':
+            self.vmWriter.writeArithmetic(VMCommand.AND)
+        if command == '|':
+            self.vmWriter.writeArithmetic(VMCommand.OR)
+        if command == '<':
+            self.vmWriter.writeArithmetic(VMCommand.LT)
+        if command == '>':
+            self.vmWriter.writeArithmetic(VMCommand.GT)
+        if command == '=':
+            self.vmWriter.writeArithmetic(VMCommand.EQ)
 
     def compileExpression(self):
-        self.beforeCompileXXX('expression')
-
         stack = []
         while True:
             self.compileTerm()
@@ -540,28 +551,28 @@ class CompilationEngine:
 
             if self.tokenizer.next_token in ['+', '-', '*', '/', '&', '|', '<', '>', '=']:
                 self.tokenizer.advance()
-                self.writexml(self.tokenizer.tokenStr())
-                op = self.tokenizer.tokenStr()
+                op = self.tokenizer.symbol()
                 if len(stack) <= 0:
-                    stack.insert(0, self.tokenizer.tokenStr())
+                    stack.insert(0, self.tokenizer.symbol())
                 else:
                     while len(stack) > 0:
+                        # 逆波兰式
                         # 当前符号优先级小于栈顶符号优先级, 弹出栈顶符号, 直到优先级不小于或者为空时插入
                         top_op = stack[0]
                         if op_privilege[op] >= op_privilege[top_op]:
                             break
                         stack.pop()
                         # 写入VM代码
+                        self.writeArithmetic(top_op)
                     stack.insert(0, op)
                 continue
             break
-        
-        self.afterCompileXXX('expression')
-        pass
+
+        while len(stack) > 0:
+            self.writeArithmetic(stack[0])
+            stack.pop()
 
     def compileTerm(self):
-        self.beforeCompileXXX('term')
-
         if not self.tokenizer.hasMoreTokens() :
             debug_log("err: invalid term")
             exit(-1)
@@ -574,8 +585,11 @@ class CompilationEngine:
                 break
             if tokenType == Token.STRING_CONST:
                 self.tokenizer.advance()
+                self.vmWriter.writePush(VMSegment.CONST, len(self.tokenizer.stringVal()))
+                self.vmWriter.writeCall('String.new', 1)
                 for c in self.tokenizer.stringVal():
                     self.vmWriter.writePush(VMSegment.CONST, ord(c))
+                    self.vmWriter.writeCall('String.appendchar', 1)
                 break
             if tokenType == Token.KEYWORD:
                 self.tokenizer.advance()
@@ -618,28 +632,38 @@ class CompilationEngine:
             
             if tokenType == Token.IDENTIFIER:
                 self.tokenizer.advance()
-                self.writexml(self.tokenizer.tokenStr())
                 if not self.tokenizer.hasMoreTokens():
                     break
 
+                curIdentifier = self.tokenizer.identifier()
+
                 if self.tokenizer.next_token == '[':
+                    # push数组基地址
+                    self.vmWriter.writePush(self.symbolTable.KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
                     self.tokenizer.advance()
-                    self.writexml(self.tokenizer.tokenStr())
                     self.compileExpression()
                     self.checkCompileSymbol(']')
+                    # 数组偏移已经push
+                    # add
+                    self.vmWriter.writeArithmetic(VMCommand.ADD)
+                    # 通过pointer将地址存入that指针
+                    self.vmWriter.writePop(VMSegment.POINTER, 1)
+                    # 取对应数组成员的值
+                    self.vmWriter.writePush(VMSegment.THAT, 0)
                     break
 
+                # subroutineName(expressionList)
                 if self.tokenizer.next_token == '(':
                     self.tokenizer.advance()
-                    self.writexml(self.tokenizer.tokenStr())
                     self.expressionListEndToken = ')'
-                    self.compileExpressionList()
+                    argNum = self.compileExpressionList()
                     self.checkCompileSymbol(')')
+                    self.vmWriter.writeCall(curIdentifier, argNum)
                     break
 
+                # (class|varName).subroutineName(expressionList)
                 if self.tokenizer.next_token == '.':
                     self.tokenizer.advance()
-                    self.writexml(self.tokenizer.tokenStr())
                     if not self.tokenizer.hasMoreTokens():
                         debug_log("err: expected 'identifier' after '.'")
                         exit(-1)
@@ -647,33 +671,33 @@ class CompilationEngine:
                     if self.tokenizer.tokenType() != Token.IDENTIFIER:
                         debug_log("err: expected 'identifier' before \'%s\''"%self.tokenizer.cur_token)
                         exit(-1)
-                    self.writexml(self.tokenizer.tokenStr())
                     self.checkCompileSymbol('(')
                     self.expressionListEndToken = ')'
-                    self.compileExpressionList()
+                    argNum = self.compileExpressionList()
                     self.checkCompileSymbol(')')
-
+                    if self.symbolTable.getValByName(curIdentifier) != None:
+                        # varName, 将对象放入argument 0
+                        self.vmWriter.writePush(self.symbolTable.KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
+                        argNum += 1
+                    self.vmWriter.writeCall(curIdentifier, argNum)
             break
-        
-        self.afterCompileXXX('term')
 
     def compileExpressionList(self):
-        self.beforeCompileXXX('expressionList')
-        
+        num = 0
         if self.tokenizer.hasMoreTokens():
             if self.expressionListEndToken == None or self.tokenizer.next_token != self.expressionListEndToken:
                 while True:
                     self.compileExpression()
+                    num += 1
 
                     if not self.tokenizer.hasMoreTokens() :
                         break
                     if self.tokenizer.next_token == ',':
                         self.tokenizer.advance()
-                        self.writexml(self.tokenizer.tokenStr())
                         continue
                     break
 
         self.expressionListEndToken = None
 
-        self.afterCompileXXX('expressionList')
+        return num
 
