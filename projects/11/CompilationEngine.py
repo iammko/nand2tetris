@@ -401,6 +401,7 @@ class CompilationEngine:
         self.checkCompileSymbol(';')
 
         self.vmWriter.writeCall(doFuncName, paramNum)
+        self.vmWriter.writePop(VMSegment.TEMP, 0)
 
 
     def compileLet(self):
@@ -434,8 +435,8 @@ class CompilationEngine:
             self.checkCompileSymbol(']')
             # 数组首地址和偏移的和
             self.vmWriter.writeArithmetic(VMCommand.ADD)
-            # 地址存入that指针(pointer[1])的
-            self.vmWriter.writePop(VMSegment.POINTER, 1)
+            # 地址存入temp[1], temp[0]用于do方法弹出值
+            self.vmWriter.writePop(VMSegment.TEMP, 1)
             bIsArray = True
             
         # '='      
@@ -445,6 +446,9 @@ class CompilationEngine:
         # ';'
         self.checkCompileSymbol(';')
         if bIsArray:
+            # 从temp[1]取出变量地址,放入that(pointer[1])
+            self.vmWriter.writePush(VMSegment.TEMP, 1)
+            self.vmWriter.writePop(VMSegment.POINTER, 1)
             # *that = expression, 数组成员赋值
             self.vmWriter.writePop(VMSegment.THAT, 0)
         else:
@@ -603,7 +607,7 @@ class CompilationEngine:
                 self.vmWriter.writeCall('String.new', 1)
                 for c in self.tokenizer.stringVal():
                     self.vmWriter.writePush(VMSegment.CONST, ord(c))
-                    self.vmWriter.writeCall('String.appendchar', 1)
+                    self.vmWriter.writeCall('String.appendChar', 2)
                 break
             if tokenType == Token.KEYWORD:
                 self.tokenizer.advance()
