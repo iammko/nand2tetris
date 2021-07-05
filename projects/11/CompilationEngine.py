@@ -26,7 +26,6 @@ class CompilationEngine:
         self.TabNum = 0
         self.funcStack = []
         self.symbolTable = None
-        self.varNum = 0
         self.whileInc = 0
         self.ifInc = 0
 
@@ -82,7 +81,6 @@ class CompilationEngine:
         if self.tokenizer.keyword() != 'class':
             debug_log("err: must start with class %s keyword:%s"%(self.tokenizer.cur_token, self.tokenizer.keyword()))
             exit
-        self.writexml(self.tokenizer.tokenStr())
 
         # 标识符 className
         if not self.tokenizer.hasMoreTokens():
@@ -177,9 +175,10 @@ class CompilationEngine:
         self.checkCompileSymbol(';')
 
     def compileSubroutine(self):
+        self.symbolTable.startSubroutine()
         # keyword
         self.tokenizer.advance()
-        self.writexml(self.tokenizer.tokenStr())
+        subroutineKind = self.tokenizer.keyword()
 
         # 类型 or void
         if not self.tokenizer.hasMoreTokens() :
@@ -208,9 +207,7 @@ class CompilationEngine:
         self.compileParameterList()
         # ')'
         self.checkCompileSymbol(')')
-        
-        varNum = 0
-        self.varNum = 0
+
         # subroutineBody
         # '{'
         self.checkCompileSymbol('{')
@@ -219,13 +216,27 @@ class CompilationEngine:
             if not self.tokenizer.hasMoreTokens() :
                 debug_log("err: miss symbol \'}\'")
                 exit(-1)
-            if self.tokenizer.next_token == 'var':
-                self.compileVarDec()
-                continue
+            if self.tokenizer.next_token != 'var':
+                break
 
-            break
-        varNum = self.varNum
-        self.vmWriter.writeFunction(functionName, varNum)
+            self.compileVarDec()
+
+        self.vmWriter.writeFunction(functionName, self.symbolTable.VarCount(SymbolTableKind.VAR))
+
+        # 构造函数
+        if subroutineKind == 'constructor':
+            # 分配内存 
+            self.vmWriter.writePush(VMSegment.CONST, self.symbolTable.VarCount(SymbolTableKind.FIELD))
+            self.vmWriter.writeCall('Memory.alloc', 1)
+            # 将指针分配给this
+            self.vmWriter.writePop(VMSegment.POINTER, 0)
+
+        # 
+        if subroutineKind == 'method':
+            # 将参数1(对象地址)，赋值给this, 通过pointer[0]
+            self.vmWriter.writePush(VMSegment.ARG, 0)
+            self.vmWriter.writePop(VMSegment.POINTER, 0)
+
         # statements
         while True:
             if not self.tokenizer.hasMoreTokens() :
@@ -254,7 +265,6 @@ class CompilationEngine:
             if not self.checkValidType():
                 debug_log('unknow var type \'%s\''%self.tokenizer.cur_token)
                 exit(-1)
-            self.writexml(self.tokenizer.tokenStr())
             varType = self.tokenizer.cur_token
 
             # varName
@@ -265,7 +275,6 @@ class CompilationEngine:
             if self.tokenizer.tokenType() != Token.IDENTIFIER:
                 debug_log("err: unknown identifier \'%s\'"%self.tokenizer.cur_token)
                 exit(-1)
-            self.writexml(self.tokenizer.tokenStr())
             varName = self.tokenizer.cur_token
             # 写入符号表
             self.symbolTable.Define(varName, varType, SymbolTableKind.ARG)
@@ -276,7 +285,6 @@ class CompilationEngine:
             if self.tokenizer.next_token != ',':
                 break
             self.tokenizer.advance()
-            self.writexml(self.tokenizer.tokenStr())
 
     def compileVarDec(self):
         # 'var' 
@@ -352,7 +360,7 @@ class CompilationEngine:
             exit(-1)            
 
         doFuncName = ''
-        subroutimeName = self.tokenizer.identifier()
+        finalName = self.tokenizer.identifier()
         # 
         if not self.tokenizer.hasMoreTokens() :
             debug_log("err: miss \'(\'")
@@ -368,14 +376,19 @@ class CompilationEngine:
             if self.tokenizer.tokenType() != Token.IDENTIFIER:
                 debug_log("err: invalid subroutimeName \'%s\'"%self.tokenizer.cur_token)
                 exit(-1)
-            doFuncName = subroutimeName + '.' + self.tokenizer.identifier()
             
-            if self.symbolTable.getValByName(subroutimeName) != None:
-                # 需要对象的方法, this指针放在参数1
-                self.vmWriter.writePush(self.symbolTable.KindOf(subroutimeName), self.symbolTable.IndexOf(subroutimeName))
+            if self.symbolTable.getValByName(finalName) != None:
+                # 需要对象的方法, this指针放在参数1, 根据对象名查找信息
+                self.vmWriter.writePush(self.symbolTable.KindOf(finalName), self.symbolTable.IndexOf(finalName))
                 paramNum = 1
+                doFuncName = self.symbolTable.TypeOf(finalName) + '.' + self.tokenizer.identifier()
+            else:
+                doFuncName = finalName + '.' + self.tokenizer.identifier()
         else:
-            doFuncName = self.className + '.' + subroutimeName
+            # 直接调用方法, 将对象基地址传入(this指针的值, 通过pointer[0])
+            self.vmWriter.writePush(VMSegment.POINTER, 0)
+            paramNum = 1
+            doFuncName = self.className +'.'+ finalName
 
         # '('
         self.checkCompileSymbol('(')
@@ -388,6 +401,7 @@ class CompilationEngine:
         self.checkCompileSymbol(';')
 
         self.vmWriter.writeCall(doFuncName, paramNum)
+
 
     def compileLet(self):
         # let
@@ -454,7 +468,7 @@ class CompilationEngine:
         self.compileExpression()
         # ')'
         # 取个反, 错误的直接跳转到结束, 好处理一些
-        self.vmWriter.writeArithmetic(VMCommand.NEG)
+        self.vmWriter.writeArithmetic(VMCommand.NOT)
         self.vmWriter.writeIf(whileLabel2)
 
         self.checkCompileSymbol(')')
@@ -494,7 +508,7 @@ class CompilationEngine:
         # expression
         self.compileExpression()
         # ')'
-        self.vmWriter.writeArithmetic(VMCommand.NEG)
+        self.vmWriter.writeArithmetic(VMCommand.NOT)
         self.vmWriter.writeIf(ifLabel1)
 
         self.checkCompileSymbol(')')
@@ -557,7 +571,7 @@ class CompilationEngine:
                 else:
                     while len(stack) > 0:
                         # 逆波兰式
-                        # 当前符号优先级小于栈顶符号优先级, 弹出栈顶符号, 直到优先级不小于或者为空时插入
+                        # 当前符号优先级不大于栈顶符号优先级, 弹出栈顶符号, 直到优先级大于或者为空时插入
                         top_op = stack[0]
                         if op_privilege[op] >= op_privilege[top_op]:
                             break
@@ -606,7 +620,7 @@ class CompilationEngine:
                     self.vmWriter.writePush(VMSegment.CONST, 0)
                 elif keyword == 'this':
                     # this -> push argument 0
-                    self.vmWriter.writePush(VMSegment.ARG, 0)
+                    self.vmWriter.writePush(VMSegment.POINTER, 0)
                 else:
                     debug_log("err: term can't use keyword \'%s\'"%self.tokenizer.keyword())
                     exit(-1)
@@ -671,6 +685,7 @@ class CompilationEngine:
                     if self.tokenizer.tokenType() != Token.IDENTIFIER:
                         debug_log("err: expected 'identifier' before \'%s\''"%self.tokenizer.cur_token)
                         exit(-1)
+                    subroutineName = self.tokenizer.identifier()
                     self.checkCompileSymbol('(')
                     self.expressionListEndToken = ')'
                     argNum = self.compileExpressionList()
@@ -679,7 +694,11 @@ class CompilationEngine:
                         # varName, 将对象放入argument 0
                         self.vmWriter.writePush(self.symbolTable.KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
                         argNum += 1
-                    self.vmWriter.writeCall(curIdentifier, argNum)
+                    self.vmWriter.writeCall(curIdentifier+'.'+subroutineName, argNum)
+                    break
+
+                # 变量
+                self.vmWriter.writePush(self.symbolTable.KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
             break
 
     def compileExpressionList(self):

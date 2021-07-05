@@ -27,7 +27,8 @@ class SymbolTable:
         return None
 
     def startSubroutine(self):
-        self.tableList[1].clear()
+        self.tableList[0]['counter'] =  {SymbolTableKind.ARG:0, SymbolTableKind.VAR:0}
+        self.tableList[0]['symbol'].clear()
 
     def Define(self, name , type, kind):
         table = self.getTableByKind(kind)
