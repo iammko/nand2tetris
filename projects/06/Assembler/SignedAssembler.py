@@ -66,7 +66,7 @@ class SignedAssembler:
             
             #print("current command address is %d"%address_counter)
             if(parser.commandType() == Parser.CommandType.A_COMMAND):
-                if(symbolTable.contains(symbol) == False):
+                if(symbolTable.contains(symbol) == False and symbol.isnumeric() == False):
                     # 加入符号表
                     symbolTable.addEntry(symbol, symbol_address)
                     symbol_address += 1
