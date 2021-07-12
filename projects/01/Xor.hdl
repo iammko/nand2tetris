@@ -14,9 +14,13 @@ CHIP Xor {
 
     PARTS:
     // Put your code here:
-    Nand(a=a, b=a, out=NOTa);
-    Nand(a=b, b=b, out=NOTb);
-    Nand(a=a, b=NOTb, out=NOTaORb);
-    Nand(a=NOTa, b=b, out=aORNOTb);
-    Nand(a=NOTaORb, b=aORNOTb, out=out);
+    // not(a == b), 可以表示为
+    // 1. not((a and b) or (nota and notb)) -> (nota or notb) and (a or b) -> (nota and a)=0 or (nota and b) or (notb and a) or (notb and b)=0 -> (nota and b) or (a and notb)
+    // 2. (nota and b) or (a and notb) -> not(a or notb) or not(nota or b) -> not( (a or notb) and (nota or b) ) = not( not(nota and b) and not(a and notb) )
+    // 即 Nand( Nand(nota, b), Nand(a, notb) ), 其中nota = Nand(a,a), notb = Nand(b,b)
+    Nand(a=a, b=a, out=nota);
+    Nand(a=b, b=b, out=notb);
+    Nand(a=nota, b=b, out=nandnab);
+    Nand(a=a, b=notb, out=nandanb);
+    Nand(a=nandnab, b=nandanb, out=out);
 }

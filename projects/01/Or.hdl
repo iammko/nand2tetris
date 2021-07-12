@@ -15,7 +15,12 @@ CHIP Or {
 
     PARTS:
     // Put your code here:
-    Nand(a=a, b=a, out=nota);
+    // 根据德·摩根定律：
+    // 非（P且Q） = 非P 或 非Q
+    // 非（P或Q） = 非P 且 非Q
+    // 有a or b = 非（非a） 或 非（非b） = 非（非a 且 非b）= Nand(非a， 非b)
+    // Nand(a, a) = 非a 或 非a = 非a
+    Nand(a=a, b=a, out=nota); 
     Nand(a=b, b=b, out=notb);
-    Nand(a=nota, b=notb, out=out);
+    Nand(a=nota, b=notb, out=aOrb);
 }
