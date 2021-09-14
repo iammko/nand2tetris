@@ -10,6 +10,8 @@ class JackTokenizer:
         self.lineNum = 0
         # 是否在注释块当中
         self.inCommentBlock = False
+        # 是否在双引号中
+        self.inDoubleQuote = False
         
         self.keywordList = ['class', 'constructor', 'function', 'method', 'field', 'static', 
             'var', 'int', 'char', 'boolean', 'void', 'true', 'false', 'null', 'this', 
@@ -27,64 +29,49 @@ class JackTokenizer:
 
             line = line.strip()
 
-            startCommentPos = 0
-
-            # 注释块 /* */
-            if self.inCommentBlock == False:
-                startCommentPos = line.find('/*')
-                if startCommentPos != -1:
-                    self.inCommentBlock = True
-
-            if self.inCommentBlock:
-                endCommentPos = line.find('*/', startCommentPos)
-                if endCommentPos == -1:
-                    # 仍然在注释块中
+            curStr = ''
+            newLine = ''
+            for c in line:
+                curStr += c
+                # 在注释块当中
+                if self.inCommentBlock:
+                    if curStr == '*':
+                        continue                    
+                    if curStr == '*/':
+                        self.inCommentBlock = False
+                    curStr = ''
                     continue
-                
-                # 删除注释部分
-                #print(line)
-                newLine = ""
-                if startCommentPos > 0:
-                    newLine = line[: startCommentPos] + ' '
-                newLine = newLine + line[endCommentPos + 2 : ]
-                line = newLine
 
-                # 剩下语句重新解析
-                self.inCommentBlock = False
-                readFlag = False
-                continue
+                # 不在注释块中
 
-            readFlag = True
+                # 双引号
+                if curStr == '"':
+                    self.inDoubleQuote = not self.inDoubleQuote
 
-            # 行注释
-            commentIdx = line.find('//')
+                # 不在双引号中
+                if not self.inDoubleQuote:
+                    # 判断注释字符
+                    if curStr == '/':
+                        continue
 
-            # 行首注释 //
-            if commentIdx == 0:
-                continue
+                    # 判断是不是块注释
+                    if curStr == '/*':
+                        curStr = ''
+                        self.inCommentBlock = True
+                        continue
 
-            # 行后注释 var int a; //
-            # 前面奇数个双引号表示在双引号当中,考虑到双引号出现只能是字符串, 并且不允许出现在表达式当中
-            if commentIdx != -1:
-                while True:
-                    #print("[%s] find '//' at %d"%(line, commentIdx))
-                    doublequoteNum = line.count(r'"', 0, commentIdx)
-                    if doublequoteNum != 1:
-                        # '//' 不在双引号当中
-                        line = line[0:commentIdx]
+                    # 判断是不是行注释
+                    if curStr == '//':
+                        curStr = ''
                         break
-                    
-                    #print("at %d, '//' is in \" \" "%commentIdx)
-                    # '//' 在双引号当中, 查找下一个
-                    commentIdx = line.find('//', commentIdx + 2)
-                    if commentIdx == -1:
-                        # 没有了
-                        break
+
+                newLine += curStr
+                curStr = ''
             
-            if line == '':
+            if newLine == '':
                 continue
 
-            self.cur_line = line
+            self.cur_line = newLine
             return True
         self.lineNum += 1
 
