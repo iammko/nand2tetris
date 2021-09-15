@@ -9,26 +9,180 @@
  * consists of 32,768 words, each holding a 16-bit binary number.
  */ 
 class Memory {
+    // 2048 ~ 16383
+    static Array freeList;
+    static Array memory;
+    static int minHeapAddress;
+    static int maxHeapAddress;
 
     /** Initializes the class. */
     function void init() {
+        let memory = 0;
+
+        let minHeapAddress = 2048;
+        let maxHeapAddress = 16383;
+
+        let freeList = minHeapAddress;
+        let freeList[0] = maxHeapAddress - minHeapAddress + 1;
+        let freeList[1] = null;
+
+        return;
     }
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        return memory[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+        let memory[address] = value;
+
+        return;
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
+        // 基本算法
+        // var int pointer;
+        // if(size > maxHeapAddress - freeList + 1)
+        // {
+        //     // 剩余内存大小不足
+        //     return null;
+        // }
+
+        // let pointer = freeList;
+        // let freeList = freeList + size;
+        // return pointer;
+        // 基本算法
+        
+
+        var Array finalPointer;
+        var Array prePointer;
+        var Array curPointer;
+
+        if(size < 1)
+        {
+            return null;
+        }
+        
+        let finalPointer = null;
+        let curPointer = freeList;
+        let prePointer = null;
+
+        // 最优适应算法
+        while(curPointer > 0)
+        {
+            if (curPointer[0] > size)
+            {
+                if (finalPointer > 0)
+                {
+                    // 大小最合适的一块
+                    if(curPointer[0] < finalPointer)
+                    {
+                        let finalPointer = curPointer[0];
+                    }
+                }
+                else
+                {
+                    let finalPointer = curPointer[0];
+                }
+            }
+
+            let prePointer = curPointer;
+            let curPointer = curPointer[1];
+        }
+        // 最优适应算法
+        
+
+        // 最先适应算法
+        // while(curPointer > 0)
+        // {
+        //     let prePointer = curPointer;
+
+        //     if (curPointer[0] > size)
+        //     {
+        //         let finalpointer = curPointer[0];
+        //         let curPointer = null;
+        //     }
+        //     else
+        //     {
+        //         let curPointer = curPointer[1];
+        //     }
+        // }
+        // 最先适应算法
+
+        if (finalPointer < minHeapAddress)
+        {
+            // 找不到, 尝试整理内存碎片
+            return null;
+        }
+
+        // 申请size大小的块,需要分配size+1的块,finalpointer-1保存块的大小
+        // freeList每个内存块需要2words保存信息, 剩余内存不足2words的话不能放入freeList, 直接返回整块
+        if (finalPointer[0] - size < 2)
+        {
+            if( prePointer > 0)
+            {
+                let prePointer[1] = finalPointer[1];
+            }
+            else
+            {
+                let freeList = finalPointer[1];
+            }
+            return finalPointer + 1;
+        }
+        
+        return finalPointer + finalPointer[0] - size - 1;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
+        var Array freePointer;
+        var Array segment;
+        var boolean bContinue;
+
+        let freePointer = freeList;
+        let segment = o - 1;
+        let bContinue = true;
+
+        // 按内存地址大小插入到List中
+        while(bContinue)
+        {
+            if (segment > freePointer)
+            {
+                // 尾部插入
+                if (freePointer[1] < 1)
+                {
+                    let bContinue = false;
+                }
+                else
+                {
+                    // freePointer < o < freePointer[1]
+                    if (freePointer[1] > o)
+                    {
+                        let bContinue = false;
+                    }
+                }
+            }
+
+            if (bContinue)
+            {
+                let freePointer = freePointer[1];
+            }
+        }
+
+        // ⭐是否连续的 
+        if ( freePointer + freePointer[0] = segment )
+        {
+            let freePointer[0] = freePointer[0] + segment[0];
+        }
+        else
+        {
+            let segment[1] = freePointer[1];
+            let freePointer[1] = segment;
+        }
     }    
 }
