@@ -3,20 +3,21 @@ from Comm import Token, Keyword
 
 class JackTokenizer:
     def __init__(self, file):
-        self.fd = open(file, 'r')
+        self.fd = open(file, 'r', encoding='utf-8')
+        self.file_name = file
         self.cur_token = ''
         self.next_token = ''
         self.cur_line = ''
-        self.lineNum = 0
+        self.line_num = 0
         # 是否在注释块当中
-        self.inCommentBlock = False
+        self.in_comment_block = False
         # 是否在双引号中
-        self.inDoubleQuote = False
+        self.in_double_quote = False
         
-        self.keywordList = ['class', 'constructor', 'function', 'method', 'field', 'static', 
+        self.keyword_list = ['class', 'constructor', 'function', 'method', 'field', 'static', 
             'var', 'int', 'char', 'boolean', 'void', 'true', 'false', 'null', 'this', 
             'let', 'do', 'if', 'else', 'while', 'return']
-        self.symbolList = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~']
+        self.symbol_list = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~']
     
     def parseNewLine(self):
         readFlag = True
@@ -26,6 +27,7 @@ class JackTokenizer:
                 line = self.fd.readline()
                 if line == '':
                     return False
+                self.line_num += 1
 
             line = line.strip()
 
@@ -34,11 +36,11 @@ class JackTokenizer:
             for c in line:
                 curStr += c
                 # 在注释块当中
-                if self.inCommentBlock:
+                if self.in_comment_block:
                     if curStr == '*':
                         continue                    
                     if curStr == '*/':
-                        self.inCommentBlock = False
+                        self.in_comment_block = False
                     curStr = ''
                     continue
 
@@ -46,10 +48,10 @@ class JackTokenizer:
 
                 # 双引号
                 if curStr == '"':
-                    self.inDoubleQuote = not self.inDoubleQuote
+                    self.in_double_quote = not self.in_double_quote
 
                 # 不在双引号中
-                if not self.inDoubleQuote:
+                if not self.in_double_quote:
                     # 判断注释字符
                     if curStr == '/':
                         continue
@@ -57,7 +59,7 @@ class JackTokenizer:
                     # 判断是不是块注释
                     if curStr == '/*':
                         curStr = ''
-                        self.inCommentBlock = True
+                        self.in_comment_block = True
                         continue
 
                     # 判断是不是行注释
@@ -73,7 +75,6 @@ class JackTokenizer:
 
             self.cur_line = newLine
             return True
-        self.lineNum += 1
 
     # 解析当前行的token, 解析出token返回true, 解析完了返回false
     def parseToken(self):
@@ -114,7 +115,7 @@ class JackTokenizer:
                     bReturnToken = True
             
             # 字元符号
-            if not bInDoubleQuote and c in self.symbolList:
+            if not bInDoubleQuote and c in self.symbol_list:
                 # 没有已解析的token, 当前符号作为解析的token
                 if self.next_token == '':
                     bReturnToken = True
@@ -162,10 +163,10 @@ class JackTokenizer:
         self.next_token = ''
 
     def tokenType(self):
-        if self.cur_token in self.keywordList:
+        if self.cur_token in self.keyword_list:
             return Token.KEYWORD
 
-        if self.cur_token in self.symbolList:
+        if self.cur_token in self.symbol_list:
             return Token.SYMBOL
 
         if self.cur_token.isidentifier():
@@ -181,10 +182,10 @@ class JackTokenizer:
         exit(-1)
 
     def nextTokenType(self):
-        if self.next_token in self.keywordList:
+        if self.next_token in self.keyword_list:
             return Token.KEYWORD
 
-        if self.next_token in self.symbolList:
+        if self.next_token in self.symbol_list:
             return Token.SYMBOL
 
         if self.next_token.isidentifier():

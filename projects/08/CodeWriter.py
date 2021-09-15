@@ -123,7 +123,7 @@ class CodeWriter:
     
     def writeIf(self, label):
         # 比较结果放入D寄存器
-        self.__popStack()
+        self.__popStack2DRegister()
         # !=0就跳转
         self.__writeStrList(
             [
@@ -196,7 +196,7 @@ class CodeWriter:
         ])
         self.__registerD2Address('R15')
         # *ARG=pop(), 此时pop()是弹出被调用者的返回值,保存于调用者的栈顶(argument 0即调用者的栈顶)
-        self.__popStack()
+        self.__popStack2DRegister()
         self.__registerD2RAMAddress('ARG')
         # 恢复调用者的栈指针,SP = ARG + 1
         self.__ramAddress2D('ARG')
@@ -335,14 +335,14 @@ class CodeWriter:
 
     def __writeBasePop(self, segment, index):
         if index == '0':
-            self.__popStack()
+            self.__popStack2DRegister()
             self.__registerD2RAMAddress(segment)
             return
         
         # 将RAM[segment]+index放入R13
         self.__2Address('M', 'R13', segment, index)
         # 弹出栈顶元素，放入D寄存器
-        self.__popStack()
+        self.__popStack2DRegister()
         # 对地址RAM[segment]+index赋值
         self.__registerD2RAMAddress('R13')
 
@@ -364,12 +364,12 @@ class CodeWriter:
 
     def __writePointerPop(self, segment, index):
         if index == '0':
-            self.__popStack()
+            self.__popStack2DRegister()
             self.__registerD2Address(segment)
             return
 
         self.__2Address('A', 'R13', segment, index)
-        self.__popStack()
+        self.__popStack2DRegister()
         self.__registerD2RAMAddress('R13')
 
     def __writeConstantPush(self, segment, index):
@@ -386,7 +386,7 @@ class CodeWriter:
         self.__pushStack()
 
     def __writeStaticPop(self, segment, index):
-        self.__popStack()
+        self.__popStack2DRegister()
         self.__writeStrList(
             [
             str.format("@%s.%s"%(self.__curfilenamenosuffix, index)),
@@ -397,9 +397,9 @@ class CodeWriter:
     # 逻辑命令
     def __writeLogicArithmetic(self, symbol):
         # 取出第一个元素y，放入D寄存器，SP--
-        self.__popStack()
+        self.__popStack2DRegister()
         # 取第二个元素x的地址，放入A寄存器
-        self.__popStackAddress()
+        self.__getStackAddress2ARegister()
         # 相减x-y，做跳转
         logic_true = str.format("%s_TRUE_%d"%(self.__curfilenamenosuffix, self.__logicidx))
         logic_end = str.format("%s_END_%d"%(self.__curfilenamenosuffix, self.__logicidx))
@@ -417,7 +417,7 @@ class CodeWriter:
             ]
         )
         # 取栈顶元素值
-        self.__popStackAddress()
+        self.__getStackAddress2ARegister()
         # 赋值
         self.__writeStrList('M=D')
 
@@ -427,16 +427,16 @@ class CodeWriter:
     # 二元算术命令
     def __writeBinaryArithmetic(self, symbol):
         # 取出第一个元素，放入D寄存器，SP--
-        self.__popStack()
+        self.__popStack2DRegister()
         # 取出第二个元素的栈地址，放入A
-        self.__popStackAddress()
+        self.__getStackAddress2ARegister()
         # 执行二元算术
         self.__writeStrList(str.format("M=M%sD"%symbol))
 
     # 一元算术命令
     def __writeUnaryArithmetic(self, symbol):
         # 取出第一个元素的栈地址
-        self.__popStackAddress()
+        self.__getStackAddress2ARegister()
         # 执行一元算术
         self.__writeStrList(str.format("M=%sM"%symbol))
         
@@ -502,7 +502,7 @@ class CodeWriter:
         )
 
     # 弹出栈顶元素，放入D寄存器，SP--
-    def __popStack(self):
+    def __popStack2DRegister(self):
         self.__writeStrList(
             [
                 '@SP',
@@ -523,7 +523,7 @@ class CodeWriter:
         )
 
     # 取栈顶元素地址，放入A寄存器，SP不递减
-    def __popStackAddress(self):
+    def __getStackAddress2ARegister(self):
         self.__writeStrList(
             [
                 '@SP',
