@@ -58,6 +58,7 @@ class Memory {
         // 基本算法
         
 
+        var Array finalPrePointer;
         var Array finalPointer;
         var Array prePointer;
         var Array curPointer;
@@ -67,9 +68,10 @@ class Memory {
             return null;
         }
         
+        let finalPrePointer = null;
         let finalPointer = null;
-        let curPointer = freeList;
         let prePointer = null;
+        let curPointer = freeList;
 
         // 最优适应算法
         while(curPointer > 0)
@@ -79,14 +81,16 @@ class Memory {
                 if (finalPointer > 0)
                 {
                     // 大小最合适的一块
-                    if(curPointer[0] < finalPointer)
+                    if(curPointer[0] < finalPointer[0])
                     {
-                        let finalPointer = curPointer[0];
+                        let finalPrePointer = prePointer;
+                        let finalPointer = curPointer;
                     }
                 }
                 else
                 {
-                    let finalPointer = curPointer[0];
+                    let finalPrePointer = prePointer;
+                    let finalPointer = curPointer;
                 }
             }
 
@@ -99,7 +103,7 @@ class Memory {
         // 最先适应算法
         // while(curPointer > 0)
         // {
-        //     let prePointer = curPointer;
+        //     let finalPrePointer = curPointer;
 
         //     if (curPointer[0] > size)
         //     {
@@ -123,18 +127,29 @@ class Memory {
         // freeList每个内存块需要2words保存信息, 剩余内存不足2words的话不能放入freeList, 直接返回整块
         if (finalPointer[0] - size < 2)
         {
-            if( prePointer > 0)
+            if( finalPrePointer > 0)
             {
-                let prePointer[1] = finalPointer[1];
+                // 上一个节点和下一个节点相连
+                let finalPrePointer[1] = finalPointer[1];
             }
             else
             {
+                // 是头上的节点
                 let freeList = finalPointer[1];
             }
             return finalPointer + 1;
         }
         
-        return finalPointer + finalPointer[0] - size - 1;
+        // 剩余块的长度
+        let finalPointer[0] = finalPointer[0] - size - 1;
+        
+        // 要分配出去的块地址
+        let finalPointer = finalPointer + finalPointer[0];
+        // 地址第一个word保存块长度
+        let finalPointer[0] = size + 1;
+
+        // 返回第二个word开始的地址
+        return finalPointer + 1;
     }
 
     /** De-allocates the given object (cast as an array) by making
@@ -184,5 +199,7 @@ class Memory {
             let segment[1] = freePointer[1];
             let freePointer[1] = segment;
         }
+
+        return;
     }    
 }

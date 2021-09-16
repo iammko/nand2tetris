@@ -31,7 +31,7 @@ class CompilationEngine:
     def debug_log(self, text, stack = 1):
         #SymbolTable.symbolTable.printTable()
         print("[%s: line %s]"%(__file__, sys._getframe(stack).f_lineno))
-        print("[compile file:%s] --> [%s] at line:%d "%(self.tokenizer.file_name, text, self.tokenizer.line_num))
+        print("[compile file:%s] token[ %s ] --> [%s] at line:%d "%(self.tokenizer.file_name, self.tokenizer.next_token, text, self.tokenizer.line_num))
 
     def writexml(self, text):
         return
@@ -255,8 +255,11 @@ class CompilationEngine:
             if self.tokenizer.next_token in ['let', 'if', 'while', 'do', 'return']:
                 self.compileStatements()
                 continue
-
             break
+        
+        if self.lastToken != 'return':
+            self.debug_log("err: not find \'return\' before '}'")
+            exit(-1)
 
         # '}'
         self.checkCompileSymbol('}')
@@ -341,6 +344,9 @@ class CompilationEngine:
         while True:
             if not self.tokenizer.hasMoreTokens():
                 break
+
+            if self.tokenizer.next_token in ['let', 'if', 'while', 'do', 'return']:
+                self.lastToken = self.tokenizer.next_token
 
             if self.tokenizer.next_token == 'let':
                 self.compileLet()
@@ -584,20 +590,24 @@ class CompilationEngine:
                 else:
                     while len(stack) > 0:
                         # 逆波兰式
-                        # 当前符号优先级不大于栈顶符号优先级, 弹出栈顶符号, 直到优先级大于或者为空时插入
+                        # 优先级大的先算
                         top_op = stack[0]
+                        # 当前符号优先级大于栈顶符号,break出去压栈
                         if op_privilege[op] > op_privilege[top_op]:
                             break
-                        stack.pop()
+                        # 栈顶符号大于或等于当前符号优先级, 弹出栈顶的符号先计算
+                        stack.pop(0)
                         # 写入VM代码
                         self.writeArithmetic(top_op)
+
+                    # 栈里没有了,或者当前符号已经大于栈顶符号优先级, 压栈
                     stack.insert(0, op)
                 continue
             break
 
         while len(stack) > 0:
             self.writeArithmetic(stack[0])
-            stack.pop()
+            stack.pop(0)
 
     def compileTerm(self):
         if not self.tokenizer.hasMoreTokens() :
