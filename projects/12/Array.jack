@@ -15,9 +15,18 @@ class Array {
 
     /** Constructs a new Array of the given size. */
     function Array new(int size) {
+        if(size > 0)
+        {
+            return Memory.alloc(size);
+        }
+
+        do Sys.error(-1);
+        return;
     }
 
     /** Disposes this array. */
     method void dispose() {
+        do Memory.deAlloc(this);
+        return;
     }
 }
