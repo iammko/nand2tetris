@@ -198,6 +198,7 @@ class CompilationEngine:
             if self.tokenizer.tokenType() != Token.KEYWORD or self.tokenizer.keyword() != 'void':
                 self.debug_log("err: invalid type \'%s\' "%(self.tokenizer.cur_token))
                 exit(-1)
+        self.returnType = self.tokenizer.cur_token
 
         # 子程序名
         if not self.tokenizer.hasMoreTokens() :
@@ -209,6 +210,10 @@ class CompilationEngine:
             exit(-1)
         self.funcStack.insert(0, self.tokenizer.identifier())
         functionName =  self.className + '.' + self.tokenizer.cur_token
+
+        # 加入this
+        if subroutineKind == 'method':
+            self.symbolTable.Define('this', self.className, SymbolTableKind.ARG)
 
         # '('
         self.checkCompileSymbol('(')
@@ -235,7 +240,10 @@ class CompilationEngine:
         # 构造函数
         if subroutineKind == 'constructor':
             # 分配内存 
-            self.vmWriter.writePush(VMSegment.CONST, self.symbolTable.VarCount(SymbolTableKind.FIELD))
+            mallocNum = self.symbolTable.VarCount(SymbolTableKind.FIELD)
+            if(mallocNum <= 0):
+                mallocNum = 1
+            self.vmWriter.writePush(VMSegment.CONST, mallocNum)
             self.vmWriter.writeCall('Memory.alloc', 1)
             # 将指针分配给this
             self.vmWriter.writePop(VMSegment.POINTER, 0)
@@ -245,6 +253,8 @@ class CompilationEngine:
             # 将参数1(对象地址)，赋值给this, 通过pointer[0]
             self.vmWriter.writePush(VMSegment.ARG, 0)
             self.vmWriter.writePop(VMSegment.POINTER, 0)
+
+        # function 不需要对象
 
         # statements
         while True:
@@ -398,13 +408,13 @@ class CompilationEngine:
                 paramNum = 1
                 doFuncName = self.symbolTable.TypeOf(finalName) + '.' + self.tokenizer.identifier()
             else:
+                # 静态方法
                 doFuncName = finalName + '.' + self.tokenizer.identifier()
         else:
+            doFuncName = self.className +'.'+ finalName
             # 直接调用方法, 将对象基地址传入(this指针的值, 通过pointer[0])
             self.vmWriter.writePush(VMSegment.POINTER, 0)
             paramNum = 1
-            doFuncName = self.className +'.'+ finalName
-
         # '('
         self.checkCompileSymbol('(')
         # expressionlist 
@@ -512,6 +522,9 @@ class CompilationEngine:
         # ';'
         self.checkCompileSymbol(';')
 
+        # 如果是void， push 0
+        if self.returnType == 'void':
+            self.vmWriter.writePush(VMSegment.CONST, 0)
         self.vmWriter.writeReturn()
 
     def compileIf(self):
@@ -731,7 +744,6 @@ class CompilationEngine:
                 while True:
                     self.compileExpression()
                     num += 1
-
                     if not self.tokenizer.hasMoreTokens() :
                         break
                     if self.tokenizer.next_token == ',':
