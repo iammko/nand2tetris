@@ -20,7 +20,7 @@ class Array {
             return Memory.alloc(size);
         }
 
-        do Sys.error(-1);
+        do Sys.error(101);
         return;
     }
 

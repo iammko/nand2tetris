@@ -36,8 +36,12 @@ class Memory {
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
-        let memory[address] = value;
+        if ((address < minHeapAddress) | (address > maxHeapAddress))
+        {
+            do Sys.error(1);
+        }
 
+        let memory[address] = value;
         return;
     }
 
@@ -65,6 +69,7 @@ class Memory {
 
         if(size < 1)
         {
+            do Sys.error(2);
             return null;
         }
         
@@ -158,6 +163,11 @@ class Memory {
         var Array freePointer;
         var Array segment;
         var boolean bContinue;
+
+        if ((o < minHeapAddress) | (o > maxHeapAddress))
+        {
+            do Sys.error(3);
+        }
 
         let freePointer = freeList;
         let segment = o - 1;
