@@ -721,18 +721,24 @@ class CompilationEngine:
                     if self.tokenizer.tokenType() != Token.IDENTIFIER:
                         self.debug_log("err: expected 'identifier' before \'%s\''"%self.tokenizer.cur_token)
                         exit(-1)
+
                     subroutineName = self.tokenizer.identifier()
-                    self.checkCompileSymbol('(')
-                    self.expressionListEndToken = ')'
-                    argNum = self.compileExpressionList()
-                    self.checkCompileSymbol(')')
+                    callFuncName = ''
+                    argNum = 0
                     if self.symbolTable.getValByName(curIdentifier) != None:
                         # varName, 将对象放入argument 0
                         self.vmWriter.writePush(self.__KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
+                        print(curIdentifier, self.__KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
                         argNum += 1
-                        self.vmWriter.writeCall(self.symbolTable.TypeOf(curIdentifier)+'.'+subroutineName, argNum)
+                        callFuncName = self.symbolTable.TypeOf(curIdentifier)+'.'+subroutineName
                     else:
-                        self.vmWriter.writeCall(curIdentifier+'.'+subroutineName, argNum)
+                        callFuncName = curIdentifier+'.'+subroutineName
+
+                    self.checkCompileSymbol('(')
+                    self.expressionListEndToken = ')'
+                    argNum += self.compileExpressionList()
+                    self.checkCompileSymbol(')')
+                    self.vmWriter.writeCall(callFuncName, argNum)
                     break
 
                 # 变量
