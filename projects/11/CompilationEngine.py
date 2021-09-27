@@ -730,7 +730,9 @@ class CompilationEngine:
                         # varName, 将对象放入argument 0
                         self.vmWriter.writePush(self.__KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
                         argNum += 1
-                    self.vmWriter.writeCall(curIdentifier+'.'+subroutineName, argNum)
+                        self.vmWriter.writeCall(self.symbolTable.TypeOf(curIdentifier)+'.'+subroutineName, argNum)
+                    else:
+                        self.vmWriter.writeCall(curIdentifier+'.'+subroutineName, argNum)
                     break
 
                 # 变量
