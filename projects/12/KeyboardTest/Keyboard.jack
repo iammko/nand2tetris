@@ -10,6 +10,7 @@ class Keyboard {
 
     /** Initializes the keyboard. */
     function void init() {
+        return;
     } 
 
     /**
@@ -54,7 +55,7 @@ class Keyboard {
         while(c > 0 | lastC < 1)
         {
             let lastC = c;
-            let c = keyPressed();
+            let c = Keyboard.keyPressed();
         }
 
         // 删除光标
@@ -81,7 +82,7 @@ class Keyboard {
         // 80个字符满了自动返回
         while(line.length() < 81)
         {
-            let c = Keyborad.readChar();
+            let c = Keyboard.readChar();
             if (c = String.newLine())
             {
                 // 换行符
@@ -92,7 +93,6 @@ class Keyboard {
             {
                 // 退格符
                 do line.eraseLastChar();
-                do Output.backSpace();
             }
             else
             {
@@ -111,6 +111,7 @@ class Keyboard {
      */
     function int readInt(String message) {
         var String intStr;
+        var int number;
 
         let intStr = Keyboard.readLine(message);
         let number = intStr.intValue();

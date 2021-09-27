@@ -8,8 +8,8 @@ from VMWriter import VMWriter
 op_privilege = {
     '*':6, '/':6, 
     '+':5, '-':5, 
-    '&':4, '|':4, 
-    '<':3, '>':3, 
+    '<':4, '>':4, 
+    '&':3, '|':3, 
     '=':2
 }
 
@@ -704,12 +704,13 @@ class CompilationEngine:
                     break
 
                 # subroutineName(expressionList)
+                # 默认是当前类
                 if self.tokenizer.next_token == '(':
                     self.tokenizer.advance()
                     self.expressionListEndToken = ')'
                     argNum = self.compileExpressionList()
                     self.checkCompileSymbol(')')
-                    self.vmWriter.writeCall(curIdentifier, argNum)
+                    self.vmWriter.writeCall(self.className + '.' + curIdentifier, argNum)
                     break
 
                 # (class|varName).subroutineName(expressionList)
@@ -729,7 +730,6 @@ class CompilationEngine:
                     if self.symbolTable.getValByName(curIdentifier) != None:
                         # varName, 将对象放入argument 0
                         self.vmWriter.writePush(self.__KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
-                        print(curIdentifier, self.__KindOf(curIdentifier), self.symbolTable.IndexOf(curIdentifier))
                         argNum += 1
                         callFuncName = self.symbolTable.TypeOf(curIdentifier)+'.'+subroutineName
                     else:
