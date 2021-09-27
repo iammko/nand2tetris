@@ -18,7 +18,7 @@ class Sys {
 
         do Main.main();
 
-        do halt();
+        do Sys.halt();
         return;
     }
 
@@ -49,7 +49,7 @@ class Sys {
     function void error(int errorCode) {
         do Output.printString("ERR");
         do Output.printInt(errorCode);
-        do halt();
+        do Sys.halt();
         return;
     }
 }
