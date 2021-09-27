@@ -24,6 +24,7 @@ class CompilationEngine:
         self.symbolTable = None
         self.whileInc = 0
         self.ifInc = 0
+        self.lastToken = ''
 
     def __del__(self):
         self.vmWriter.close()
