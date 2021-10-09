@@ -11,54 +11,124 @@
  * string-oriented operations.
  */
 class String {
+    field int m_maxLength;
+    field int m_curLength;
+    field Array m_strPointer;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        if(maxLength < 1)
+        {
+            do Sys.error(601);
+        }
+
+        let m_maxLength = maxLength;
+        let m_curLength = 0;
+        let m_strPointer = Array.new(maxLength);
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        do m_strPointer.dispose();
+        do Memory.deAlloc(this);
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return m_curLength;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return m_strPointer[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        let m_strPointer[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        if(m_curLength = m_maxLength)
+        {
+            do Sys.error(602);
+        }
+
+        let m_strPointer[m_curLength] = c;
+        let m_curLength = m_curLength + 1;
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        if(m_curLength < 1)
+        {
+            do Sys.error(603);
+        }
+
+        let m_curLength = m_curLength - 1;
+        let m_strPointer[m_curLength] = 0;
+        return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int val, curIndex;
+
+        let val = 0;
+        let curIndex = 0;
+
+        while(curIndex < m_curLength)
+        {
+            if (m_strPointer[curIndex] < 48 | m_strPointer[curIndex] > 57)
+            {
+                break;
+            }
+
+            let val = val * 10 + m_strPointer[curIndex] - 48;
+            let curIndex = curIndex + 1;
+        }
+
+        return val;
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        var int lastDigit;
+
+        let lastDigit = val % 10;
+
+        if (val < 10)
+        {
+            do this.appendChar(lastDigit);
+        }
+        else
+        {
+            do this.setInt(val/10);
+            do this.appendChar(lastDigit);
+        }
+
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
