@@ -41,7 +41,9 @@ class JackTokenizer:
                         continue                    
                     if curStr == '*/':
                         self.in_comment_block = False
-                    curStr = ''
+                        curStr = ''
+                    else:
+                        curStr = c
                     continue
 
                 # 不在注释块中
