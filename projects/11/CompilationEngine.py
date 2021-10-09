@@ -6,6 +6,7 @@ from SymbolTable import symbolTable, SymbolTable
 from VMWriter import VMWriter
 
 op_privilege = {
+    '%':7, 
     '*':6, '/':6, 
     '+':5, '-':5, 
     '<':4, '>':4, 
@@ -356,7 +357,7 @@ class CompilationEngine:
             if not self.tokenizer.hasMoreTokens():
                 break
 
-            if self.tokenizer.next_token in ['let', 'if', 'while', 'do', 'return']:
+            if self.tokenizer.next_token in ['let', 'if', 'while', 'do', 'return', 'break']:
                 self.lastToken = self.tokenizer.next_token
 
             if self.tokenizer.next_token == 'let':
@@ -369,6 +370,8 @@ class CompilationEngine:
                 self.compileDo()
             elif self.tokenizer.next_token == 'return':
                 self.compileReturn()
+            elif self.tokenizer.next_token == 'break':
+                self.compileBreak()
             else:
                 break
 
@@ -491,6 +494,7 @@ class CompilationEngine:
         self.whileInc += 1
         whileLabel2 = '%s_%s_while_%d_%d'%(self.className, self.funcStack[0], self.tokenizer.line_num, self.whileInc)
         self.whileInc += 1
+        self.breakLabel = whileLabel2
 
         # '('
         self.checkCompileSymbol('(')
@@ -568,6 +572,9 @@ class CompilationEngine:
         
         self.vmWriter.writeLabel(ifLabel2)
 
+    def compileBreak(self):
+        self.vmWriter.writeGoto(self.breakLabel);
+
     def writeArithmetic(self, command):
         if command == '+':
             self.vmWriter.writeArithmetic(VMCommand.ADD)
@@ -577,6 +584,8 @@ class CompilationEngine:
             self.vmWriter.writeCall('Math.multiply', 2)
         if command == '/':
             self.vmWriter.writeCall('Math.divide', 2)
+        if command == '%':
+            self.vmWriter.writeCall('Math.modulo', 2)
         if command == '&':
             self.vmWriter.writeArithmetic(VMCommand.AND)
         if command == '|':
@@ -596,7 +605,7 @@ class CompilationEngine:
             if not self.tokenizer.hasMoreTokens() :
                 break
 
-            if self.tokenizer.next_token in ['+', '-', '*', '/', '&', '|', '<', '>', '=']:
+            if op_privilege.get(self.tokenizer.next_token) != None:
                 self.tokenizer.advance()
                 op = self.tokenizer.symbol()
                 if len(stack) <= 0:
