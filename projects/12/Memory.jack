@@ -36,10 +36,10 @@ class Memory {
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
-        if ((address < minHeapAddress) | (address > maxHeapAddress))
-        {
-            do Sys.error(1);
-        }
+        // if ((address < minHeapAddress) | (address > maxHeapAddress))
+        // {
+        //     do Sys.error(1);
+        // }
 
         let memory[address] = value;
         return;
