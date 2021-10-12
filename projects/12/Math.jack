@@ -10,6 +10,7 @@
 class Math {
 
     static Array twoToThe;
+    static Array zeroBit;
 
     /** Initializes the library. */
     function void init() {
@@ -31,6 +32,24 @@ class Math {
         let twoToThe[14] = twoToThe[13] + twoToThe[13];
         let twoToThe[15] = twoToThe[14] + twoToThe[14];
 
+        let zeroBit = Array.new(16);
+        let zeroBit[0] = -1 - twoToThe[0];
+        let zeroBit[1] = -1 - twoToThe[1];
+        let zeroBit[2] = -1 - twoToThe[2];
+        let zeroBit[3] = -1 - twoToThe[3];
+        let zeroBit[4] = -1 - twoToThe[4];
+        let zeroBit[5] = -1 - twoToThe[5];
+        let zeroBit[6] = -1 - twoToThe[6];
+        let zeroBit[7] = -1 - twoToThe[7];
+        let zeroBit[8] = -1 - twoToThe[8];
+        let zeroBit[9] = -1 - twoToThe[9];
+        let zeroBit[10] = -1 - twoToThe[10];
+        let zeroBit[11] = -1 - twoToThe[11];
+        let zeroBit[12] = -1 - twoToThe[12];
+        let zeroBit[13] = -1 - twoToThe[13];
+        let zeroBit[14] = -1 - twoToThe[14];
+        let zeroBit[15] = -1 - twoToThe[15];
+
         return;
     }
 
@@ -39,6 +58,21 @@ class Math {
     **/
     function boolean bit(int x, int j){
         return ~(x & twoToThe[j] = 0);
+    }
+
+    function int setBit(int x, int j, boolean b){
+        if(b)
+        {
+            // j位设置为1
+            let x = x | twoToThe[j];
+        }
+        else
+        {
+            // j位设置为0
+            let x = x & zeroBit[j];
+        }
+
+        return x;
     }
 
     /** Returns the absolute value of x. */
@@ -157,8 +191,8 @@ class Math {
     }
 
     /** Returns the modulo part of x%y. */
-    function int modulo(){
-        return 0;
+    function int modulo(int x, int y){
+        return x - (x / y) * y ;
     }
 
     /** Returns the greater number. */
