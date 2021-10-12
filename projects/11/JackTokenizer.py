@@ -17,7 +17,7 @@ class JackTokenizer:
         self.keyword_list = ['class', 'constructor', 'function', 'method', 'field', 'static', 
             'var', 'int', 'char', 'boolean', 'void', 'true', 'false', 'null', 'this', 
             'let', 'do', 'if', 'else', 'while', 'return']
-        self.symbol_list = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~']
+        self.symbol_list = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~', '%']
     
     def parseNewLine(self):
         readFlag = True
