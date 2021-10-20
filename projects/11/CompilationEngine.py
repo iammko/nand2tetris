@@ -384,8 +384,8 @@ class CompilationEngine:
             self.debug_log("err: miss subroutimeName | (className|varName)")
             exit(-1)
         self.tokenizer.advance()
-        if self.tokenizer.tokenType() != Token.IDENTIFIER:
-            self.debug_log("compileDo err: invalid identifier \'%s\'"%self.tokenizer.cur_token)
+        if self.tokenizer.tokenType() != Token.IDENTIFIER and self.tokenizer.cur_token != 'this':
+            self.debug_log("compileDo err: invalid identifier \'%s\' type:%s"%(self.tokenizer.cur_token, self.tokenizer.tokenType()))
             exit(-1)            
 
         doFuncName = ''
@@ -573,7 +573,9 @@ class CompilationEngine:
         self.vmWriter.writeLabel(ifLabel2)
 
     def compileBreak(self):
-        self.vmWriter.writeGoto(self.breakLabel);
+        self.tokenizer.advance()
+        self.vmWriter.writeGoto(self.breakLabel)
+        self.checkCompileSymbol(';')
 
     def writeArithmetic(self, command):
         if command == '+':
