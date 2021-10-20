@@ -70,7 +70,6 @@ class Memory {
         if(size < 1)
         {
             do Sys.error(2);
-            return null;
         }
         
         let finalPrePointer = null;
