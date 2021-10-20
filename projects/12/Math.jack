@@ -113,7 +113,7 @@ class Math {
     function int rdivide(int x, int y){
         var int preNum;
 
-        if ( y > x )
+        if ( y > x | y < 0)
         {
             return 0;
         }
